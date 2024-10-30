@@ -53,7 +53,9 @@ public class UsersController {
         user.setUsername(users.getUsername());
         user.setPhone(users.getPhone());
         user.setPasswordHash(hv);
+        user.setUserType(users.getUserType());
         user.setSalt(salt);
+
         usersService.save(user);
         // 返回完整用户信息
         return user;
