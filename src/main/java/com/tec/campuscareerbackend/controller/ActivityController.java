@@ -36,6 +36,13 @@ public class ActivityController {
         return R.ok(result);
     }
 
+    // 根据ID查询活动
+    @GetMapping("/{id}")
+    public R<Activity> getActivityById(@PathVariable Long id) {
+        Activity activity = activityService.getById(id);
+        return R.ok(activity);
+    }
+
 
     // 添加活动
     @PostMapping
