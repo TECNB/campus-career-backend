@@ -1,14 +1,17 @@
 server:
   port: 8080
+  base-url: http://10.248.6.72:8080
 spring:
   application:
     name: stargazerbackend
-
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://10.248.6.72:3306/campus_career?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
     username: root
     password: Qro4ndqQIlFOORQ
+  web:
+    resources:
+      static-locations: file:/Users/tec/Desktop/
 
 #Sa-Token ??
 sa-token:
@@ -36,3 +39,5 @@ mybatis-plus:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl #??sql??
     map-underscore-to-camel-case: true #???????????camel case???
 
+file:
+  upload-dir: /home/sdsy/docekr-campus-career/image/

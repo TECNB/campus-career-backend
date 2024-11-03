@@ -1,10 +1,13 @@
 package com.tec.campuscareerbackend.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import java.time.LocalDateTime;
 import java.io.Serializable;
+import java.util.List;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -111,5 +114,9 @@ public class Activity implements Serializable {
      */
     private LocalDateTime updatedAt;
 
-
+    /**
+     * 存储活动的所有图片路径，不映射到数据库表
+     */
+    @TableField(exist = false)
+    private List<String> imagePaths;
 }
