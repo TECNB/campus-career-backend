@@ -16,7 +16,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * <p>
@@ -118,9 +121,12 @@ public class ActivityController {
                 dir.mkdirs();
             }
 
-            // 随机生成文件名并确保唯一
-            String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-            System.out.println(fileName);
+            // 使用 UUID 部分值和时间戳生成短的唯一文件名
+            String originalFilename = file.getOriginalFilename();
+            String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            String uniqueString = UUID.randomUUID().toString().substring(0, 8) + System.currentTimeMillis();
+            String fileName = generateHash(uniqueString) + fileExtension;
+            System.out.println("Generated File Name: " + fileName);
 
             // 保存文件到指定目录
             File uploadFile = new File(dir, fileName);
@@ -134,6 +140,20 @@ public class ActivityController {
         } catch (IOException e) {
             e.printStackTrace();
             return R.error("文件上传失败：" + e.getMessage());
+        }
+    }
+
+    private String generateHash(String input) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-1");
+            byte[] hashBytes = md.digest(input.getBytes());
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hashBytes) {
+                hexString.append(String.format("%02x", b));
+            }
+            return hexString.toString().substring(0, 12); // 取前12位，生成较短唯一文件名
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
         }
     }
 }

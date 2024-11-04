@@ -20,6 +20,4 @@ public interface IActivityImageService extends IService<ActivityImage> {
 
         ActivityImage deleteAllActivityImage(Integer activityId);
 
-        ActivityImage updateActivityImage(Integer activityId, Integer imageId, String imagePath);
-
 }

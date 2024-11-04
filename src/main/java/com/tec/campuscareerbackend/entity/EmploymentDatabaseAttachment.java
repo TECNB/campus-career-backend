@@ -18,27 +18,25 @@ import lombok.experimental.Accessors;
  * </p>
  *
  * @author TECNB
- * @since 2024-10-31
+ * @since 2024-11-04
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
-@TableName("employment_database")
-public class EmploymentDatabase implements Serializable {
+@TableName("employment_database_attachment")
+public class EmploymentDatabaseAttachment implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
 
-    private String category;
+    private Integer employmentDatabaseId;
 
-    private String title;
+    private String filePath;
 
-    private String details;
+    private String fileName;
 
-    private LocalDateTime createdAt;
+    private LocalDateTime uploadTime;
 
-    @TableField(exist = false)
-    private List<EmploymentDatabaseAttachment> attachment;
 }

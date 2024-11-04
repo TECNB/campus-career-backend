@@ -38,13 +38,4 @@ public class ActivityImageServiceImpl extends ServiceImpl<ActivityImageMapper, A
             this.lambdaQuery().eq(ActivityImage::getActivityId, activityId).list().forEach(this::removeById);
             return null;
         }
-
-        @Override
-        public ActivityImage updateActivityImage(Integer activityId, Integer imageId, String imagePath) {
-            ActivityImage activityImage = this.lambdaQuery().eq(ActivityImage::getActivityId, activityId).eq(ActivityImage::getId, imageId).one();
-            activityImage.setImagePath(imagePath);
-            this.updateById(activityImage);
-            return activityImage;
-        }
-
 }
