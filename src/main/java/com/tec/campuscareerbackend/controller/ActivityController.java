@@ -21,6 +21,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.UUID;
 
+import static com.tec.campuscareerbackend.utils.Utils.generateHash;
+
 /**
  * <p>
  * 活动信息表 前端控制器
@@ -140,20 +142,6 @@ public class ActivityController {
         } catch (IOException e) {
             e.printStackTrace();
             return R.error("文件上传失败：" + e.getMessage());
-        }
-    }
-
-    private String generateHash(String input) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-1");
-            byte[] hashBytes = md.digest(input.getBytes());
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : hashBytes) {
-                hexString.append(String.format("%02x", b));
-            }
-            return hexString.toString().substring(0, 12); // 取前12位，生成较短唯一文件名
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
         }
     }
 }

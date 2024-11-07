@@ -69,4 +69,18 @@ public class Utils {
         }
         return userId;
     }
+
+    public static String generateHash(String input) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-1");
+            byte[] hashBytes = md.digest(input.getBytes());
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hashBytes) {
+                hexString.append(String.format("%02x", b));
+            }
+            return hexString.toString().substring(0, 12); // 取前12位，生成较短唯一文件名
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
