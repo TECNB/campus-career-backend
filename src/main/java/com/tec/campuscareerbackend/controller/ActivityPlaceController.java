@@ -1,6 +1,7 @@
 package com.tec.campuscareerbackend.controller;
 
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tec.campuscareerbackend.common.R;
 import com.tec.campuscareerbackend.entity.Activity;
@@ -27,11 +28,11 @@ public class ActivityPlaceController {
 
     // 通过构建一个分页查询接口，实现获取ActivityPlace表中所有数据的接口
     @GetMapping
-    public R<List<ActivityPlace>> getAll(@RequestParam(defaultValue = "1") int page,
+    public R<Page<ActivityPlace>> getAll(@RequestParam(defaultValue = "1") int page,
                                          @RequestParam(defaultValue = "10") int size) {
         Page<ActivityPlace> activityPlacePage = new Page<>(page, size);
         Page<ActivityPlace> result = activityPlaceService.page(activityPlacePage);
-        return R.ok(result.getRecords());
+        return R.ok(result);
     }
 
     // 根据ID查询活动地点
@@ -60,6 +61,32 @@ public class ActivityPlaceController {
     public R<ActivityPlace> updateActivityPlace(@RequestBody ActivityPlace activityPlace) {
         activityPlaceService.updateById(activityPlace);
         return R.ok(activityPlace);
+    }
+
+    // 搜索活动地点
+    @GetMapping("/search")
+    public R<List<ActivityPlace>> searchActivityPlace(
+            @RequestParam(required = false) String filterField,
+            @RequestParam(required = false) String filterValue) {
+
+        QueryWrapper<ActivityPlace> queryWrapper = new QueryWrapper<>();
+
+        // 根据字段名动态添加查询条件
+        if (filterField != null && filterValue != null) {
+            switch (filterField) {
+                case "name":
+                    queryWrapper.like("name", filterValue);
+                    break;
+                case "createdAt":
+                    queryWrapper.like("created_at", filterValue);
+                    break;
+                default:
+                    return R.error("无效的筛选字段");
+            }
+        }
+
+        List<ActivityPlace> result = activityPlaceService.list(queryWrapper);
+        return R.ok(result);
     }
 
 }

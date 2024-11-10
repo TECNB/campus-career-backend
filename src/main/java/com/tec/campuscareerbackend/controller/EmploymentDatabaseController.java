@@ -1,6 +1,7 @@
 package com.tec.campuscareerbackend.controller;
 
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tec.campuscareerbackend.common.R;
 import com.tec.campuscareerbackend.entity.EmploymentDatabase;
@@ -145,5 +146,43 @@ public class EmploymentDatabaseController {
                 .contentLength(byteArrayResource.contentLength())
                 .contentType(org.springframework.http.MediaType.APPLICATION_OCTET_STREAM)
                 .body(byteArrayResource);
+    }
+
+    // 搜索就业信息
+    @GetMapping("/search")
+    public R<Page<EmploymentDatabase>> searchEmploymentDatabase(
+            @RequestParam(required = false) String filterField,
+            @RequestParam(required = false) String filterValue,
+            @RequestParam int page,
+            @RequestParam int size) {
+
+        Page<EmploymentDatabase> employmentDatabasePage = new Page<>(page, size);
+        QueryWrapper<EmploymentDatabase> queryWrapper = new QueryWrapper<>();
+
+        // 根据字段名动态添加查询条件
+        if (filterField != null && filterValue != null) {
+            switch (filterField) {
+                case "category":
+                    queryWrapper.like("category", filterValue);
+                    break;
+                case "title":
+                    queryWrapper.like("title", filterValue);
+                    break;
+                case "attachment":
+                    queryWrapper.like("attachment", filterValue);
+                    break;
+                case "details":
+                    queryWrapper.like("details", filterValue);
+                    break;
+                case "createdAt":
+                    queryWrapper.like("created_at", filterValue);
+                    break;
+                default:
+                    return R.error("无效的筛选字段");
+            }
+        }
+
+        Page<EmploymentDatabase> result = employmentDatabaseService.page(employmentDatabasePage, queryWrapper);
+        return R.ok(result);
     }
 }

@@ -1,6 +1,8 @@
 package com.tec.campuscareerbackend.controller;
 
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tec.campuscareerbackend.common.R;
 import com.tec.campuscareerbackend.entity.ActivityTargetAudience;
@@ -26,11 +28,11 @@ public class ActivityTargetAudienceController {
 
     // 通过构建一个分页查询接口，实现获取ActivityTargetAudience表中所有数据的接口
     @GetMapping
-    public R<List<ActivityTargetAudience>> getAll(@RequestParam(defaultValue = "1") int page,
+    public R<Page<ActivityTargetAudience>> getAll(@RequestParam(defaultValue = "1") int page,
                                                   @RequestParam(defaultValue = "10") int size) {
         Page<ActivityTargetAudience> activityTargetAudiencePage = new Page<>(page, size);
         Page<ActivityTargetAudience> result = activityTargetAudienceService.page(activityTargetAudiencePage);
-        return R.ok(result.getRecords());
+        return R.ok(result);
     }
 
     // 根据ID查询活动对象
@@ -59,6 +61,38 @@ public class ActivityTargetAudienceController {
     public R<ActivityTargetAudience> updateActivityTargetAudience(@RequestBody ActivityTargetAudience activityTargetAudience) {
         activityTargetAudienceService.updateById(activityTargetAudience);
         return R.ok(activityTargetAudience);
+    }
+
+    @GetMapping("/search")
+    public R<Page<ActivityTargetAudience>> searchActivityTargetAudience(
+            @RequestParam(required = false) String filterField,
+            @RequestParam(required = false) String filterValue,
+            @RequestParam int page,
+            @RequestParam int size) {
+
+        Page<ActivityTargetAudience> pageRequest = new Page<>(page, size);
+        QueryWrapper<ActivityTargetAudience> queryWrapper = new QueryWrapper<>();
+
+        // 根据字段名动态添加查询条件
+        if (filterField != null && filterValue != null) {
+            switch (filterField) {
+                case "audienceLabel":
+                    queryWrapper.like("audience_label", filterValue);
+                    break;
+                case "audienceValue":
+                    queryWrapper.like("audience_value", filterValue);
+                    break;
+                case "createdAt":
+                    queryWrapper.like("created_at", filterValue);
+                    break;
+                // 其他可筛选的字段同理添加
+                default:
+                    return R.error("无效的筛选字段");
+            }
+        }
+
+        Page<ActivityTargetAudience> result = activityTargetAudienceService.page(pageRequest, queryWrapper);
+        return R.ok(result);
     }
 
 }

@@ -1,6 +1,7 @@
 package com.tec.campuscareerbackend.controller;
 
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tec.campuscareerbackend.common.R;
 import com.tec.campuscareerbackend.entity.EmploymentDatabase;
@@ -71,5 +72,67 @@ public class EmploymentSearchController {
     public R<EmploymentSearch> updateEmploymentSearch(@RequestBody EmploymentSearch employmentSearch) {
         employmentSearchService.updateById(employmentSearch);
         return R.ok(employmentSearch);
+    }
+
+    // 搜索就业信息
+    @GetMapping("/search")
+    public R<Page<EmploymentSearch>> searchEmploymentSearch(
+            @RequestParam(required = false) String filterField,
+            @RequestParam(required = false) String filterValue,
+            @RequestParam int page,
+            @RequestParam int size) {
+
+        Page<EmploymentSearch> pageRequest = new Page<>(page, size);
+        QueryWrapper<EmploymentSearch> queryWrapper = new QueryWrapper<>();
+
+        // 根据字段名动态添加查询条件
+        if (filterField != null && filterValue != null) {
+            switch (filterField) {
+                case "name":
+                    queryWrapper.like("name", filterValue);
+                    break;
+                case "gender":
+                    queryWrapper.eq("gender", filterValue);
+                    break;
+                case "className":
+                    queryWrapper.like("class_name", filterValue);
+                    break;
+                case "userId":
+                    queryWrapper.eq("user_id", filterValue);
+                    break;
+                case "contactNumber":
+                    queryWrapper.like("contact_number", filterValue);
+                    break;
+                case "classTeacher":
+                    queryWrapper.like("class_teacher", filterValue);
+                    break;
+                case "graduationTutor":
+                    queryWrapper.like("graduation_tutor", filterValue);
+                    break;
+                case "futurePlan":
+                    queryWrapper.like("future_plan", filterValue);
+                    break;
+                case "companyName":
+                    queryWrapper.like("company_name", filterValue);
+                    break;
+                case "employmentStatus":
+                    queryWrapper.like("employment_status", filterValue);
+                    break;
+                case "workLocation":
+                    queryWrapper.like("work_location", filterValue);
+                    break;
+                case "salary":
+                    queryWrapper.eq("salary", filterValue);
+                    break;
+                case "companyNature":
+                    queryWrapper.like("company_nature", filterValue);
+                    break;
+                default:
+                    return R.error("无效的筛选字段");
+            }
+        }
+
+        Page<EmploymentSearch> result = employmentSearchService.page(pageRequest, queryWrapper);
+        return R.ok(result);
     }
 }

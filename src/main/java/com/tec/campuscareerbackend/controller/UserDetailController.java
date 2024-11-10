@@ -2,6 +2,7 @@ package com.tec.campuscareerbackend.controller;
 
 
 import com.alibaba.excel.EasyExcel;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tec.campuscareerbackend.common.R;
 import com.tec.campuscareerbackend.dto.UserDetailExcelDto;
@@ -37,11 +38,11 @@ public class UserDetailController {
 
     // 获取所有用户信息构建一个分页查询接口
     @GetMapping
-    public R<List<UserDetail>> getAll(@RequestParam(defaultValue = "1") int page,
+    public R<Page<UserDetail>> getAll(@RequestParam(defaultValue = "1") int page,
                                       @RequestParam(defaultValue = "10") int size) {
         Page<UserDetail> userDetailPage = new Page<>(page, size);
         Page<UserDetail> result = userDetailService.page(userDetailPage);
-        return R.ok(result.getRecords());
+        return R.ok(result);
     }
 
     // 通过ID查询用户信息
@@ -120,6 +121,40 @@ public class UserDetailController {
             e.printStackTrace();
             return R.error("导入失败: " + e.getMessage());
         }
+    }
+
+    // 搜索用户信息
+    @GetMapping("/search")
+    public R<Page<UserDetail>> searchUserDetail(
+            @RequestParam(required = false) String filterField,
+            @RequestParam(required = false) String filterValue,
+            @RequestParam int page,
+            @RequestParam int size) {
+
+        Page<UserDetail> pageRequest = new Page<>(page, size);
+        QueryWrapper<UserDetail> queryWrapper = new QueryWrapper<>();
+
+        // 根据字段名动态添加查询条件
+        if (filterField != null && filterValue != null) {
+            switch (filterField) {
+                case "audienceLabel":
+                    queryWrapper.like("audience_label", filterValue);
+                    break;
+                case "audienceValue":
+                    queryWrapper.like("audience_value", filterValue);
+                    break;
+                case "createdAt":
+                    queryWrapper.like("created_at", filterValue);
+                    break;
+                default:
+                    return R.error("无效的筛选字段");
+            }
+        } else {
+            return R.error("无效的筛选字段");
+        }
+
+        Page<UserDetail> result = userDetailService.page(pageRequest, queryWrapper);
+        return R.ok(result);
     }
 
 }

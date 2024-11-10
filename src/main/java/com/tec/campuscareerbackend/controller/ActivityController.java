@@ -1,6 +1,7 @@
 package com.tec.campuscareerbackend.controller;
 
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tec.campuscareerbackend.common.R;
 import com.tec.campuscareerbackend.entity.Activity;
@@ -51,11 +52,8 @@ public class ActivityController {
     @GetMapping
     public R<Page<Activity>> getAll(@RequestParam(defaultValue = "1") int page,
                                     @RequestParam(defaultValue = "10") int size) {
-        // 创建分页对象
         Page<Activity> activityPage = new Page<>(page, size);
-        // 使用 MyBatis Plus 进行分页查询
         Page<Activity> result = activityService.page(activityPage);
-
         return R.ok(result);
     }
 
@@ -143,5 +141,58 @@ public class ActivityController {
             e.printStackTrace();
             return R.error("文件上传失败：" + e.getMessage());
         }
+    }
+
+    // 搜素活动
+    @GetMapping("/search")
+    public R<Page<Activity>> searchActivity(
+            @RequestParam(required = false) String filterField,
+            @RequestParam(required = false) String filterValue,
+            @RequestParam int page,
+            @RequestParam int size) {
+
+        Page<Activity> pageRequest = new Page<>(page, size);
+        QueryWrapper<Activity> queryWrapper = new QueryWrapper<>();
+
+        // 根据字段名动态添加查询条件
+        if (filterField != null && filterValue != null) {
+            switch (filterField) {
+                case "name":
+                    queryWrapper.like("name", filterValue);
+                    break;
+                case "startTime":
+                    queryWrapper.like("start_time", filterValue);
+                    break;
+                case "endTime":
+                    queryWrapper.like("end_time", filterValue);
+                    break;
+                case "place":
+                    queryWrapper.like("place", filterValue);
+                    break;
+                case "participantCount":
+                    queryWrapper.eq("participant_count", filterValue);
+                    break;
+                case "money":
+                    queryWrapper.eq("money", filterValue);
+                    break;
+                case "nature":
+                    queryWrapper.like("nature", filterValue);
+                    break;
+                case "area":
+                    queryWrapper.like("area", filterValue);
+                    break;
+                case "jobPosition":
+                    queryWrapper.like("job_position", filterValue);
+                    break;
+                case "targetAudience":
+                    queryWrapper.like("target_audience", filterValue);
+                    break;
+                default:
+                    return R.error("无效的筛选字段");
+            }
+        }
+
+        Page<Activity> result = activityService.page(pageRequest, queryWrapper);
+        return R.ok(result);
     }
 }
