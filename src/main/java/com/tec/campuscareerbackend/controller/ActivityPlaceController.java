@@ -1,6 +1,7 @@
 package com.tec.campuscareerbackend.controller;
 
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tec.campuscareerbackend.common.R;
 import com.tec.campuscareerbackend.entity.Activity;
 import com.tec.campuscareerbackend.entity.ActivityPlace;
@@ -26,9 +27,11 @@ public class ActivityPlaceController {
 
     // 通过构建一个分页查询接口，实现获取ActivityPlace表中所有数据的接口
     @GetMapping
-    public R<List<ActivityPlace>> getAll() {
-        List<ActivityPlace> activityPlaceList = activityPlaceService.list();
-        return R.ok(activityPlaceList);
+    public R<List<ActivityPlace>> getAll(@RequestParam(defaultValue = "1") int page,
+                                         @RequestParam(defaultValue = "10") int size) {
+        Page<ActivityPlace> activityPlacePage = new Page<>(page, size);
+        Page<ActivityPlace> result = activityPlaceService.page(activityPlacePage);
+        return R.ok(result.getRecords());
     }
 
     // 根据ID查询活动地点

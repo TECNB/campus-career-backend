@@ -1,6 +1,7 @@
 package com.tec.campuscareerbackend.controller;
 
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tec.campuscareerbackend.common.R;
 import com.tec.campuscareerbackend.entity.ActivityTargetAudience;
 import com.tec.campuscareerbackend.service.IActivityTargetAudienceService;
@@ -25,9 +26,11 @@ public class ActivityTargetAudienceController {
 
     // 通过构建一个分页查询接口，实现获取ActivityTargetAudience表中所有数据的接口
     @GetMapping
-    public R<List<ActivityTargetAudience>> getAll() {
-        List<ActivityTargetAudience> activityTargetAudienceList = activityTargetAudienceService.list();
-        return R.ok(activityTargetAudienceList);
+    public R<List<ActivityTargetAudience>> getAll(@RequestParam(defaultValue = "1") int page,
+                                                  @RequestParam(defaultValue = "10") int size) {
+        Page<ActivityTargetAudience> activityTargetAudiencePage = new Page<>(page, size);
+        Page<ActivityTargetAudience> result = activityTargetAudienceService.page(activityTargetAudiencePage);
+        return R.ok(result.getRecords());
     }
 
     // 根据ID查询活动对象

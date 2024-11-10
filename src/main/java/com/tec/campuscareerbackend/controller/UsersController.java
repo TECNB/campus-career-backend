@@ -64,11 +64,7 @@ public class UsersController {
     // 登录功能
     @PostMapping("/login")
     public Users login(@RequestBody Users users) throws NoSuchAlgorithmException{
-        // 校验中国手机号
-        if (!isPhone(users.getPhone())) {
-            throw new CustomException(PHONE_FORMAT_ERROR);
-        }
-        Users user = usersService.getByPhone(users.getPhone());
+        Users user = usersService.getByStudentId(users.getStudentId());
         if (user == null) {
             throw new CustomException(USER_NOT_FOUND);
         }
@@ -84,5 +80,4 @@ public class UsersController {
             throw new CustomException(PASSWORD_ERROR);
         }
     }
-
 }

@@ -18,4 +18,7 @@ public interface IUsersService extends IService<Users> {
 
     // 通过userId检查是否存在该用户
     boolean checkUserExistByUserId(String userId);
+
+    // 通过studentId获取用户
+    Users getByStudentId(String studentId);
 }

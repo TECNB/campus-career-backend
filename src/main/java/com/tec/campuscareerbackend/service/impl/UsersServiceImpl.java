@@ -33,4 +33,10 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
         // 根据用户id查询用户
         return this.lambdaQuery().eq(Users::getUserId, userId).count() > 0;
     }
+
+    @Override
+    public Users getByStudentId(String studentId) {
+        // 根据学号查询用户
+        return this.lambdaQuery().eq(Users::getStudentId, studentId).one();
+    }
 }

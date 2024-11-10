@@ -28,6 +28,8 @@ public class Users implements Serializable {
     @TableId(value = "user_id", type = IdType.ASSIGN_UUID)
     private String userId;
 
+    private String studentId;
+
     private String username;
 
     private String passwordHash;
@@ -35,18 +37,6 @@ public class Users implements Serializable {
     private String userType;
 
     private String avatarUrl;
-
-    private Integer age;
-
-    private String city;
-
-    private String province;
-
-    private String signature;
-
-    private String aboutMe;
-
-    private BigDecimal starRating;
 
     private String token;
 
