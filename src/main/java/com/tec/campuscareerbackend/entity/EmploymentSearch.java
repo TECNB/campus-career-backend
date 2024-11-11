@@ -1,10 +1,12 @@
 package com.tec.campuscareerbackend.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -47,7 +49,7 @@ public class EmploymentSearch implements Serializable {
     /**
      * 学号
      */
-    private String userId;
+    private String studentId;
 
     /**
      * 联系方式
@@ -95,4 +97,7 @@ public class EmploymentSearch implements Serializable {
     private String companyName;
 
     private LocalDateTime createdAt;
+
+    @TableField(exist = false)
+    private UserDetail userDetail;
 }

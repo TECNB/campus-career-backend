@@ -6,9 +6,11 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tec.campuscareerbackend.common.R;
 import com.tec.campuscareerbackend.entity.EmploymentDatabase;
 import com.tec.campuscareerbackend.entity.EmploymentSearch;
+import com.tec.campuscareerbackend.entity.UserDetail;
 import com.tec.campuscareerbackend.service.IEmploymentDatabaseService;
 import com.tec.campuscareerbackend.service.IEmploymentSearchService;
 import com.tec.campuscareerbackend.service.IJobSearchService;
+import com.tec.campuscareerbackend.service.IUserDetailService;
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,6 +27,8 @@ import org.springframework.web.bind.annotation.*;
 public class EmploymentSearchController {
     @Resource
     private IEmploymentSearchService employmentSearchService;
+    @Resource
+    private IUserDetailService userDetailService;
 
     // 通过构建一个分页查询接口，实现获取employment-search表中所有数据的接口
     @GetMapping
@@ -49,6 +53,17 @@ public class EmploymentSearchController {
     @GetMapping("/user/{userId}")
     public R<EmploymentSearch> getEmploymentSearchByUserId(@PathVariable Long userId) {
         EmploymentSearch employmentSearch = employmentSearchService.getByUserId(userId);
+        if (employmentSearch == null) {
+            employmentSearch = new EmploymentSearch();
+        }
+
+        // 通过用户ID查询用户信息
+        QueryWrapper<UserDetail> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("student_id", userId);
+        UserDetail userDetail = userDetailService.getOne(queryWrapper);
+
+        employmentSearch.setUserDetail(userDetail);
+
         return R.ok(employmentSearch);
     }
 

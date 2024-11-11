@@ -20,6 +20,6 @@ public class EmploymentSearchServiceImpl extends ServiceImpl<EmploymentSearchMap
     @Override
     public EmploymentSearch getByUserId(Long userId) {
         // 根据用户id查询就业搜索信息
-        return this.lambdaQuery().eq(EmploymentSearch::getUserId, userId).one();
+        return this.lambdaQuery().eq(EmploymentSearch::getStudentId, userId).one();
     }
 }
