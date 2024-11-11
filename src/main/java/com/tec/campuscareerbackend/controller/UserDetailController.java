@@ -62,7 +62,14 @@ public class UserDetailController {
     // 删除用户信息
     @DeleteMapping
     public R<String> deleteUserDetail(@RequestBody UserDetail userDetail) {
+        // 删除 user_detail 表中的数据，同时删除 users 表中的数据
+        UserDetail userDetailServiceById = userDetailService.getById(userDetail.getId());
         userDetailService.removeById(userDetail.getId());
+
+        QueryWrapper<Users> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("student_id", userDetailServiceById.getStudentId());
+        usersService.remove(queryWrapper);
+
         return R.ok("删除成功");
     }
 
@@ -137,11 +144,26 @@ public class UserDetailController {
         // 根据字段名动态添加查询条件
         if (filterField != null && filterValue != null) {
             switch (filterField) {
-                case "audienceLabel":
-                    queryWrapper.like("audience_label", filterValue);
+                case "name":
+                    queryWrapper.like("name", filterValue);
                     break;
-                case "audienceValue":
-                    queryWrapper.like("audience_value", filterValue);
+                case "gender":
+                    queryWrapper.like("gender", filterValue);
+                    break;
+                case "className":
+                    queryWrapper.like("class_name", filterValue);
+                    break;
+                case "studentId":
+                    queryWrapper.like("student_id", filterValue);
+                    break;
+                case "contactNumber":
+                    queryWrapper.like("contact_number", filterValue);
+                    break;
+                case "classTeacher":
+                    queryWrapper.like("class_teacher", filterValue);
+                    break;
+                case "graduationTutor":
+                    queryWrapper.like("graduation_tutor", filterValue);
                     break;
                 case "createdAt":
                     queryWrapper.like("created_at", filterValue);
@@ -156,5 +178,4 @@ public class UserDetailController {
         Page<UserDetail> result = userDetailService.page(pageRequest, queryWrapper);
         return R.ok(result);
     }
-
 }
