@@ -120,4 +120,13 @@ public class JobSearchController {
         return R.ok(result);
     }
 
+    // 智能匹配岗位接口，通过 studentId 获取 className 后再匹配岗位
+    @GetMapping("/match")
+    public R<Page<JobSearch>> matchJobsByStudentId(@RequestParam String studentId,
+                                                   @RequestParam(defaultValue = "1") int page,
+                                                   @RequestParam(defaultValue = "10") int size) {
+        Page<JobSearch> result = jobSearchService.matchJobsByStudentId(studentId, page, size);
+        return R.ok(result);
+    }
+
 }

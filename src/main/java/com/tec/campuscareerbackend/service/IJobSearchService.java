@@ -1,5 +1,6 @@
 package com.tec.campuscareerbackend.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tec.campuscareerbackend.entity.JobSearch;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -13,4 +14,5 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface IJobSearchService extends IService<JobSearch> {
 
+    Page<JobSearch> matchJobsByStudentId(String studentId, int page, int size);
 }
