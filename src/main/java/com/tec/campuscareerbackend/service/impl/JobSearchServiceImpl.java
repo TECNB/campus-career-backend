@@ -68,9 +68,11 @@ public class JobSearchServiceImpl extends ServiceImpl<JobSearchMapper, JobSearch
             return new Page<>(); // 若未找到对应用户，返回空结果
         }
         String className = userDetail.getClassName();
+        System.out.println("className: " + className);
 
         // 2. 根据 className 查找对应的专业
         String major = CLASS_MAJOR_MAP.get(className);
+        System.out.println("major: " + major);
         System.out.println("major: " + major);
         if (major == null) {
             return new Page<>(); // 若 className 未匹配到对应专业，返回空结果

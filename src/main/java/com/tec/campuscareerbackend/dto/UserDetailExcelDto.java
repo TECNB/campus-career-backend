@@ -25,6 +25,6 @@ public class UserDetailExcelDto {
     @ExcelProperty("班主任")
     private String classTeacher;
 
-    @ExcelProperty("毕业设计导师")
+    @ExcelProperty("导师")
     private String graduationTutor;
 }

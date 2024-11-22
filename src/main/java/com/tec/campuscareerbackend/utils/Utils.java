@@ -6,6 +6,7 @@ import com.tec.campuscareerbackend.common.CustomException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -81,6 +82,21 @@ public class Utils {
             return hexString.toString().substring(0, 12); // 取前12位，生成较短唯一文件名
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
+        }
+    }
+    /**
+     * 日期解析工具方法
+     * @param dateStr 日期字符串
+     * @param formatter 日期格式化器
+     * @return LocalDate 转换后的日期，或者 null
+     */
+    public static LocalDate parseDate(String dateStr, DateTimeFormatter formatter) {
+        try {
+            return dateStr != null && !dateStr.isEmpty() ? LocalDate.parse(dateStr, formatter) : null;
+        } catch (Exception e) {
+            // 日志记录异常并忽略格式错误的日期
+            e.printStackTrace();
+            return null;
         }
     }
 }
