@@ -111,7 +111,7 @@ public class UserInfoExcelDto {
     @ExcelProperty("预备党员时间")
     private String probationaryDate;
 
-    @ExcelProperty("发展转正时间")
+    @ExcelProperty("党员转正时间")
     private String fullMemberDate;
 
     @ExcelProperty("党建工时")

@@ -203,7 +203,7 @@ public class UserInfo implements Serializable {
     private LocalDate probationaryDate;
 
     /**
-     * 发展转正时间
+     * 党员转正时间
      */
     private LocalDate fullMemberDate;
 
