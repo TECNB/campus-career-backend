@@ -43,6 +43,11 @@ public class UserInfo implements Serializable {
     private String gender;
 
     /**
+     * 手机
+     */
+    private String phone;
+
+    /**
      * 学号
      */
     private String studentId;

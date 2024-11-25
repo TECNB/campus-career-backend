@@ -15,6 +15,9 @@ public class UserInfoExcelDto {
     @ExcelProperty("性别")
     private String gender;
 
+    @ExcelProperty("手机号码")
+    private String phone;
+
     @ExcelProperty("学号")
     private String studentId;
 

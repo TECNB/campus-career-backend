@@ -4,11 +4,11 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tec.campuscareerbackend.entity.EmploymentSearch;
 import com.tec.campuscareerbackend.entity.JobSearch;
-import com.tec.campuscareerbackend.entity.UserDetail;
+import com.tec.campuscareerbackend.entity.UserInfo;
 import com.tec.campuscareerbackend.mapper.ActivityTargetAudienceMapper;
 import com.tec.campuscareerbackend.mapper.EmploymentSearchMapper;
 import com.tec.campuscareerbackend.mapper.JobSearchMapper;
-import com.tec.campuscareerbackend.mapper.UserDetailMapper;
+import com.tec.campuscareerbackend.mapper.UserInfoMapper;
 import com.tec.campuscareerbackend.service.IJobSearchService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import jakarta.annotation.PostConstruct;
@@ -31,7 +31,7 @@ import java.util.Map;
 public class JobSearchServiceImpl extends ServiceImpl<JobSearchMapper, JobSearch> implements IJobSearchService {
 
     @Autowired
-    private UserDetailMapper userDetailMapper;
+    private UserInfoMapper userInfoMapper;
     @Autowired
     private EmploymentSearchMapper employmentSearchMapper;
     @Autowired
@@ -60,89 +60,74 @@ public class JobSearchServiceImpl extends ServiceImpl<JobSearchMapper, JobSearch
     @Override
     public Page<JobSearch> matchJobsByStudentId(String studentId, int page, int size) {
         // 1. 通过 studentId 查询出对应的 className
-        UserDetail userDetail = userDetailMapper.selectOne(new QueryWrapper<UserDetail>().eq("student_id", studentId));
-        if (userDetail == null) {
+        UserInfo userInfo = userInfoMapper.selectOne(new QueryWrapper<UserInfo>().eq("student_id", studentId));
+        if (userInfo == null) {
             return new Page<>(); // 若未找到对应用户，返回空结果
         }
-        String className = userDetail.getClassName();
-        System.out.println("className: " + className);
+        String className = userInfo.getClassName();
 
         // 2. 根据 className 查找对应的专业
         String major = CLASS_MAJOR_MAP.get(className);
-        System.out.println("major: " + major);
         if (major == null) {
             return new Page<>(); // 若 className 未匹配到对应专业，返回空结果
         }
 
-        // 3. 创建查询条件
+        // 3. 创建分页和查询条件
         Page<JobSearch> jobSearchPage = new Page<>(page, size);
         QueryWrapper<JobSearch> queryWrapper = new QueryWrapper<>();
+        queryWrapper.and(wrapper ->
+                wrapper.like("major_requirement", major).or().eq("major_requirement", "无")
+        );
 
-        // 专业筛选条件
-        queryWrapper.like("major_requirement", major);
-
-        // 4. 获取用户想要的薪资
-        EmploymentSearch employmentSearch = employmentSearchMapper.selectOne(new QueryWrapper<EmploymentSearch>().eq("student_id", studentId));
-        Integer lowSalaryValue = null;
-        if (employmentSearch != null) {
-            String money = employmentSearch.getSalary();
-            System.out.println("money: " + money);
-
-            // 根据‘/’分割字符串，取第一个数字作为最低薪资
-            String[] moneyArray = money.split("/");
-            String lowMoney = moneyArray[0];
-            System.out.println("lowMoney: " + lowMoney);
-
-            // 定义薪资范围映射
-            Map<String, Integer> salaryMap = new HashMap<>();
-            salaryMap.put("2000-5000", 2000);
-            salaryMap.put("5000-8000", 5000);
-            salaryMap.put("8000-15000", 8000);
-            salaryMap.put("15000以上", 15000);
-
-            // 获取用户最低薪资值
-            lowSalaryValue = salaryMap.get(lowMoney);
-        }
-
-        // 5. 获取用户想要的工作地点
-        String[] areaArray = null;
-        if (employmentSearch != null) {
-            String area = employmentSearch.getWorkLocation();
-            System.out.println("area: " + area);
-
-            // 根据‘/’分割字符串，获取用户想要的工作地点
-            areaArray = area.split("/");
-        }
-
-        // 6. 薪资从高到低排序
-        queryWrapper.orderByDesc("CASE " +
-                "WHEN money = '2000-5000' THEN 2000 " +
-                "WHEN money = '5000-8000' THEN 5000 " +
-                "WHEN money = '8000-15000' THEN 8000 " +
-                "WHEN money = '15000以上' THEN 15000 " +
-                "ELSE 0 END");
-
-        // 7. 查询数据
+        // 查询数据
         Page<JobSearch> resultPage = this.page(jobSearchPage, queryWrapper);
 
-        // 8. 逐条计算 matchLevel 并设置星级
-        for (JobSearch job : resultPage.getRecords()) {
+        // 4. 获取用户偏好（薪资、地点）
+        EmploymentSearch employmentSearch = employmentSearchMapper.selectOne(new QueryWrapper<EmploymentSearch>().eq("student_id", studentId));
+        Integer lowSalaryValue = null;
+        String[] areaArray = null;
+
+        if (employmentSearch != null) {
+            // 解析薪资
+            Map<String, Integer> salaryMap = Map.of(
+                    "2000-5000", 2000,
+                    "5000-8000", 5000,
+                    "8000-15000", 8000,
+                    "15000以上", 15000
+            );
+            String money = employmentSearch.getSalary();
+            if (money != null) {
+                String[] moneyArray = money.split("/");
+                lowSalaryValue = salaryMap.getOrDefault(moneyArray[0], null);
+            }
+
+            // 解析地点
+            String area = employmentSearch.getWorkLocation();
+            if (area != null) {
+                areaArray = area.split("/");
+            }
+        }
+
+        // 5. 在内存中计算 matchLevel 并排序
+        List<JobSearch> records = resultPage.getRecords();
+        for (JobSearch job : records) {
             int matchCount = 0;
 
             // 专业匹配
-            if (job.getMajorRequirement() != null && job.getMajorRequirement().contains(major)) {
+            if ("无".equals(job.getMajorRequirement()) ||
+                    (job.getMajorRequirement() != null && job.getMajorRequirement().contains(major))) {
                 matchCount++;
             }
 
             // 薪资匹配
             if (lowSalaryValue != null) {
-                int jobSalary = 0;
-                switch (job.getMoney()) {
-                    case "2000-5000": jobSalary = 2000; break;
-                    case "5000-8000": jobSalary = 5000; break;
-                    case "8000-15000": jobSalary = 8000; break;
-                    case "15000以上": jobSalary = 15000; break;
-                }
+                int jobSalary = switch (job.getMoney()) {
+                    case "2000-5000" -> 2000;
+                    case "5000-8000" -> 5000;
+                    case "8000-15000" -> 8000;
+                    case "15000以上" -> 15000;
+                    default -> 0;
+                };
                 if (jobSalary >= lowSalaryValue) {
                     matchCount++;
                 }
@@ -158,17 +143,44 @@ public class JobSearchServiceImpl extends ServiceImpl<JobSearchMapper, JobSearch
                 }
             }
 
-            // 根据匹配数量设置星级
+            // 设置匹配等级
             String matchLevel = switch (matchCount) {
                 case 1 -> "🌟";
                 case 2 -> "🌟🌟";
                 case 3 -> "🌟🌟🌟";
                 default -> "";
             };
-            job.setMatchLevel(matchLevel); // 假设 JobSearch 有 matchLevel 字段
+            job.setMatchLevel(matchLevel);
+            job.setMatchCount(matchCount); // 添加 matchCount 作为排序依据
         }
 
-        // 9. 返回结果
+
+
+        // 按 matchCount 排序，若 matchCount 相等，按 money 降序排序
+        records.sort((o1, o2) -> {
+            int matchCompare = Integer.compare(o2.getMatchCount(), o1.getMatchCount());
+            if (matchCompare != 0) {
+                return matchCompare;
+            }
+            // 若 matchCount 相等，按 money 降序排序
+            int salary1 = getSalaryValue(o1.getMoney());
+            int salary2 = getSalaryValue(o2.getMoney());
+            return Integer.compare(salary2, salary1);
+        });
+
+        // 6. 更新结果并返回
+        resultPage.setRecords(records);
         return resultPage;
     }
+    private int getSalaryValue(String salaryRange) {
+        return switch (salaryRange) {
+            case "2000-5000" -> 2000;
+            case "5000-8000" -> 5000;
+            case "8000-15000" -> 8000;
+            case "15000以上" -> 15000;
+            default -> 0;
+        };
+    }
+
+
 }

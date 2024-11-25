@@ -12,9 +12,13 @@ import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -41,12 +45,16 @@ public class ConversationRecordsController {
         return R.ok(result);
     }
 
-    // 根据ID查询谈话记录
+    // 根据ID查询谈话记录,构建一个分页查询接口
     @GetMapping("/{id}")
-    public R<ConversationRecords> getConversationRecordsById(@PathVariable String id) {
+    public R<Page<ConversationRecords>> getConversationRecordsById(@PathVariable String id,
+                                                                   @RequestParam(defaultValue = "1") int page,
+                                                                   @RequestParam(defaultValue = "10") int size) {
         QueryWrapper<ConversationRecords> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("student_id", id);
-        ConversationRecords conversationRecords = conversationRecordsService.getOne(queryWrapper);
+        Page<ConversationRecords> conversationRecordsPage = new Page<>(page, size);
+        Page<ConversationRecords> conversationRecords = conversationRecordsService.page(conversationRecordsPage, queryWrapper);
+
         return R.ok(conversationRecords);
     }
 
@@ -75,50 +83,79 @@ public class ConversationRecordsController {
     public R<String> importExcel(@RequestParam("file") MultipartFile file) {
         try {
             // 定义日期格式解析器
-            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            // 读取Excel数据并过滤只获取需要的字段
+            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd");
+
+            // 读取 Excel 数据
             List<ConversationRecordsExcelDto> conversationList = EasyExcel.read(file.getInputStream())
                     .head(ConversationRecordsExcelDto.class)
                     .sheet()
                     .doReadSync();
 
-            for (ConversationRecordsExcelDto dto : conversationList) {
-                // 检查关键字段是否为空，判断是否为空白行
-                if (dto.getConversationTime() == null || dto.getConversationTime().isEmpty()) {
-                    // 遇到空白行，跳出循环并返回成功
-                    return R.ok("导入成功");
-                }
-                System.out.println("不是哥们"+dto.getConversationTime());
+            // 过滤掉空白行并转换为实体
+            List<ConversationRecords> conversationRecords = conversationList.stream()
+                    .filter(this::isValidDto) // 检查是否为空白行
+                    .map(dto -> convertToEntity(dto, dateFormatter)) // DTO 转实体
+                    .collect(Collectors.toList());
 
-                // 保存到 conversation_records 表
-                ConversationRecords conversationRecord = new ConversationRecords();
-                conversationRecord.setUniversity(dto.getUniversity());
-                conversationRecord.setConversationTarget(dto.getConversationTarget());
-                conversationRecord.setParticipantCount(dto.getParticipantCount());
-                conversationRecord.setOtherTopics(dto.getOtherTopics());
-                conversationRecord.setConversationTopic(dto.getConversationTopic());
-                conversationRecord.setStudentId(dto.getStudentId());
-                conversationRecord.setConversationType(dto.getConversationType());
-                conversationRecord.setParentContact(dto.getParentContact());
-                conversationRecord.setDepartment(dto.getDepartment());
-                conversationRecord.setConversationTeacher(dto.getConversationTeacher());
-                conversationRecord.setConversationLocation(dto.getConversationLocation());
-                conversationRecord.setConversationContent(dto.getConversationContent());
-                conversationRecord.setStatus(dto.getStatus());
-                conversationRecord.setAttentionLevel(dto.getAttentionLevel());
-
-                // 日期字段转换
-                conversationRecord.setConversationTime(LocalDateTime.parse(dto.getConversationTime(), dateFormatter));
-                conversationRecord.setCreatedAt(LocalDateTime.parse(dto.getCreatedAt(), dateFormatter));
-                conversationRecord.setUpdatedAt(LocalDateTime.parse(dto.getUpdatedAt(), dateFormatter));
-
-                conversationRecordsService.save(conversationRecord); // 保存到数据库
+            // 批量保存或更新数据
+            if (!conversationRecords.isEmpty()) {
+                conversationRecordsService.saveOrUpdateBatch(conversationRecords);
             }
+
             return R.ok("导入成功");
+        } catch (IOException e) {
+            e.printStackTrace();
+            return R.error("导入失败: 文件读取错误");
+        } catch (DateTimeParseException e) {
+            e.printStackTrace();
+            return R.error("导入失败: 日期格式错误");
         } catch (Exception e) {
             e.printStackTrace();
             return R.error("导入失败: " + e.getMessage());
         }
+    }
+
+    /**
+     * 校验 DTO 是否为空白行
+     */
+    private boolean isValidDto(ConversationRecordsExcelDto dto) {
+        return dto.getConversationTime() != null && !dto.getConversationTime().isEmpty();
+    }
+
+    /**
+     * 将 DTO 转换为实体
+     */
+    private ConversationRecords convertToEntity(ConversationRecordsExcelDto dto, DateTimeFormatter dateFormatter) {
+        ConversationRecords record = new ConversationRecords();
+        record.setId(dto.getId()); // 确保设置主键以支持更新
+        record.setUniversity(dto.getUniversity());
+        record.setConversationTarget(dto.getConversationTarget());
+        record.setParticipantCount(dto.getParticipantCount());
+        record.setOtherTopics(dto.getOtherTopics());
+        record.setConversationTopic(dto.getConversationTopic());
+        record.setStudentId(dto.getStudentId());
+        record.setConversationType(dto.getConversationType());
+        record.setParentContact(dto.getParentContact());
+        record.setDepartment(dto.getDepartment());
+        record.setConversationTeacher(dto.getConversationTeacher());
+        record.setConversationLocation(dto.getConversationLocation());
+        record.setConversationContent(dto.getConversationContent());
+        record.setStatus(dto.getStatus());
+        record.setAttentionLevel(dto.getAttentionLevel());
+
+        // 日期字段转换
+        record.setConversationTime(parseDate(dto.getConversationTime(), dateFormatter));
+        record.setCreatedAt(parseDate(dto.getCreatedAt(), dateFormatter));
+        record.setUpdatedAt(parseDate(dto.getUpdatedAt(), dateFormatter));
+
+        return record;
+    }
+
+    /**
+     * 解析日期字段
+     */
+    private LocalDate parseDate(String dateStr, DateTimeFormatter formatter) {
+        return dateStr != null && !dateStr.isEmpty() ? LocalDate.parse(dateStr, formatter) : null;
     }
 
 }

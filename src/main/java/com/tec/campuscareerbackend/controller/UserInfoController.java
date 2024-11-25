@@ -9,6 +9,7 @@ import com.tec.campuscareerbackend.dto.UserInfoExcelDto;
 import com.tec.campuscareerbackend.entity.UserInfo;
 import com.tec.campuscareerbackend.entity.Users;
 import com.tec.campuscareerbackend.service.IUserInfoService;
+import com.tec.campuscareerbackend.service.IUsersService;
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,6 +33,8 @@ import static com.tec.campuscareerbackend.utils.Utils.parseDate;
 public class UserInfoController {
     @Resource
     private IUserInfoService userInfoService;
+    @Resource
+    private IUsersService usersService;
 
     // 通过构建一个分页查询接口，实现获取user-info表中所有数据的接口
     @GetMapping
@@ -138,6 +141,21 @@ public class UserInfoController {
                 userInfo.setBranchDeputySecretary(dto.getBranchDeputySecretary());
                 userInfoService.save(userInfo);
 
+                // 初始化保存到 users 表
+                Users user = new Users();
+                user.setStudentId(dto.getStudentId());
+                user.setUsername(dto.getName());
+
+                // 生成初始密码为学号后6位
+                String initialPassword = dto.getStudentId().substring(dto.getStudentId().length() - 6);
+                String salt = generateSalt();
+                String passwordHash = encryptHv(initialPassword, salt);
+
+                user.setPasswordHash(passwordHash);
+                user.setSalt(salt);
+                user.setUserType("student");
+                user.setPhone(dto.getCounselorPhone());
+                usersService.save(user);
             }
             return R.ok("导入成功");
         } catch (Exception e) {

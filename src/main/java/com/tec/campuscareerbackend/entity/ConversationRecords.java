@@ -3,6 +3,8 @@ package com.tec.campuscareerbackend.entity;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.io.Serializable;
 import lombok.Data;
@@ -34,7 +36,7 @@ public class ConversationRecords implements Serializable {
     /**
      * 谈话时间
      */
-    private LocalDateTime conversationTime;
+    private LocalDate conversationTime;
 
     /**
      * 院校
@@ -109,12 +111,12 @@ public class ConversationRecords implements Serializable {
     /**
      * 创建时间
      */
-    private LocalDateTime createdAt;
+    private LocalDate createdAt;
 
     /**
      * 最后更新时间
      */
-    private LocalDateTime updatedAt;
+    private LocalDate updatedAt;
 
 
 }

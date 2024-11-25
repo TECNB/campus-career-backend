@@ -4,13 +4,9 @@ package com.tec.campuscareerbackend.controller;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tec.campuscareerbackend.common.R;
-import com.tec.campuscareerbackend.entity.EmploymentDatabase;
 import com.tec.campuscareerbackend.entity.EmploymentSearch;
-import com.tec.campuscareerbackend.entity.UserDetail;
-import com.tec.campuscareerbackend.service.IEmploymentDatabaseService;
-import com.tec.campuscareerbackend.service.IEmploymentSearchService;
-import com.tec.campuscareerbackend.service.IJobSearchService;
-import com.tec.campuscareerbackend.service.IUserDetailService;
+import com.tec.campuscareerbackend.entity.UserInfo;
+import com.tec.campuscareerbackend.service.*;
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,7 +24,7 @@ public class EmploymentSearchController {
     @Resource
     private IEmploymentSearchService employmentSearchService;
     @Resource
-    private IUserDetailService userDetailService;
+    private IUserInfoService userInfoService;
 
     // 通过构建一个分页查询接口，实现获取employment-search表中所有数据的接口
     @GetMapping
@@ -58,11 +54,11 @@ public class EmploymentSearchController {
         }
 
         // 通过用户ID查询用户信息
-        QueryWrapper<UserDetail> queryWrapper = new QueryWrapper<>();
+        QueryWrapper<UserInfo> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("student_id", userId);
-        UserDetail userDetail = userDetailService.getOne(queryWrapper);
+        UserInfo userInfo = userInfoService.getOne(queryWrapper);
 
-        employmentSearch.setUserDetail(userDetail);
+        employmentSearch.setUserInfo(userInfo);
 
         return R.ok(employmentSearch);
     }

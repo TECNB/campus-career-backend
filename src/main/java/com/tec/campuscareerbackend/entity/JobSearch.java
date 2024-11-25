@@ -98,9 +98,15 @@ public class JobSearch implements Serializable {
     private LocalDateTime updatedAt;
 
     /**
-     * 匹配程度
+     * 匹配程度星级
      */
     @TableField(exist = false)
     private String matchLevel;
+
+    /**
+     * 匹配程度分数
+     */
+    @TableField(exist = false)
+    private Integer matchCount;
 
 }

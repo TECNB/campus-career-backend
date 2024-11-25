@@ -5,6 +5,8 @@ import lombok.Data;
 
 @Data
 public class ConversationRecordsExcelDto {
+    @ExcelProperty("序号")
+    private Integer id;
 
     @ExcelProperty("谈话时间")
     private String conversationTime;

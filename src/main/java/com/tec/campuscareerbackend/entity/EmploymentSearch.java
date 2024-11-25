@@ -54,7 +54,7 @@ public class EmploymentSearch implements Serializable {
     /**
      * 联系方式
      */
-    private String contactNumber;
+    private String phone;
 
     /**
      * 班主任
@@ -99,5 +99,5 @@ public class EmploymentSearch implements Serializable {
     private LocalDateTime createdAt;
 
     @TableField(exist = false)
-    private UserDetail userDetail;
+    private UserInfo userInfo;
 }
