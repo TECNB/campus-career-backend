@@ -1,14 +1,17 @@
 package com.tec.campuscareerbackend.controller;
 
 
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tec.campuscareerbackend.common.R;
+import com.tec.campuscareerbackend.dto.ActivityTargetAudienceExcelDto;
 import com.tec.campuscareerbackend.entity.ActivityTargetAudience;
 import com.tec.campuscareerbackend.service.IActivityTargetAudienceService;
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -93,6 +96,37 @@ public class ActivityTargetAudienceController {
 
         Page<ActivityTargetAudience> result = activityTargetAudienceService.page(pageRequest, queryWrapper);
         return R.ok(result);
+    }
+
+    @PostMapping("/importExcel")
+    public R<String> importActivityTargetAudienceExcel(@RequestParam("file") MultipartFile file) {
+        try {
+            // 读取Excel数据并过滤只获取需要的字段
+            List<ActivityTargetAudienceExcelDto> audienceList = EasyExcel.read(file.getInputStream())
+                    .head(ActivityTargetAudienceExcelDto.class)
+                    .sheet()
+                    .doReadSync();
+
+            for (ActivityTargetAudienceExcelDto dto : audienceList) {
+                // 检查关键字段是否为空，判断是否为空白行
+                if (dto.getAudienceLabel() == null || dto.getAudienceLabel().isEmpty()) {
+                    // 遇到空白行，跳出循环并返回成功
+                    return R.ok("导入成功");
+                }
+
+                // 保存到 activity_target_audience 表
+                ActivityTargetAudience activityTargetAudience = new ActivityTargetAudience();
+                activityTargetAudience.setAudienceLabel(dto.getAudienceLabel());
+                activityTargetAudience.setAudienceValue(dto.getAudienceValue());
+
+                // 保存到数据库
+                activityTargetAudienceService.save(activityTargetAudience);
+            }
+            return R.ok("导入成功");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return R.error("导入失败: " + e.getMessage());
+        }
     }
 
 }
