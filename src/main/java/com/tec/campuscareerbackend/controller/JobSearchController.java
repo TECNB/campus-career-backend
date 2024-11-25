@@ -9,6 +9,8 @@ import com.tec.campuscareerbackend.service.IJobSearchService;
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * <p>
  * 岗位发布详情表 前端控制器
@@ -62,6 +64,20 @@ public class JobSearchController {
     public R<JobSearch> updateJobSearch(@RequestBody JobSearch jobSearch) {
         jobSearchService.updateById(jobSearch);
         return R.ok(jobSearch);
+    }
+
+    // 批量删除岗位发布详情
+    @DeleteMapping("/batch")
+    public R<?> deleteJobSearchBatch(@RequestBody List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return R.error("删除失败，ID列表不能为空！");
+        }
+        boolean result = jobSearchService.removeByIds(ids);
+        if (result) {
+            return R.ok("删除成功！");
+        } else {
+            return R.error("删除失败！");
+        }
     }
 
     // 搜索岗位发布详情
