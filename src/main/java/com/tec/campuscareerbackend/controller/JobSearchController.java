@@ -1,15 +1,19 @@
 package com.tec.campuscareerbackend.controller;
 
 
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tec.campuscareerbackend.common.R;
+import com.tec.campuscareerbackend.dto.JobSearchExcelDto;
 import com.tec.campuscareerbackend.entity.JobSearch;
 import com.tec.campuscareerbackend.service.IJobSearchService;
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -143,6 +147,49 @@ public class JobSearchController {
                                                    @RequestParam(defaultValue = "10") int size) {
         Page<JobSearch> result = jobSearchService.matchJobsByStudentId(studentId, page, size);
         return R.ok(result);
+    }
+
+    @PostMapping("/importExcel")
+    public R<String> importJobSearchExcel(@RequestParam("file") MultipartFile file) {
+        try {
+            // 使用 EasyExcel 读取 Excel 数据
+            List<JobSearchExcelDto> jobList = EasyExcel.read(file.getInputStream())
+                    .head(JobSearchExcelDto.class)
+                    .sheet()
+                    .doReadSync();
+
+            // 过滤掉空白行
+            List<JobSearchExcelDto> validJobList = jobList.stream()
+                    .filter(dto -> dto.getCompanyName() != null && !dto.getCompanyName().isEmpty())
+                    .collect(Collectors.toList());
+
+            // 将 DTO 转换为实体列表
+            List<JobSearch> jobEntities = validJobList.stream().map(dto -> {
+                JobSearch entity = new JobSearch();
+                entity.setCompanyName(dto.getCompanyName());
+                entity.setPositionName(dto.getPositionName());
+                entity.setHrName(dto.getHrName());
+                entity.setHrPhone(dto.getHrPhone());
+                entity.setMajorRequirement(dto.getMajorRequirement());
+                entity.setParticipantCount(dto.getParticipantCount());
+                entity.setMoney(dto.getMoney());
+                entity.setArea(dto.getArea());
+                entity.setApplicationLink(dto.getApplicationLink());
+                entity.setAdditionalRequirements(dto.getAdditionalRequirements());
+                entity.setCompanyDescription(dto.getCompanyDescription());
+                return entity;
+            }).collect(Collectors.toList());
+
+            // 批量保存或更新
+            if (!jobEntities.isEmpty()) {
+                jobSearchService.saveOrUpdateBatch(jobEntities);
+            }
+
+            return R.ok("导入成功");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return R.error("导入失败: " + e.getMessage());
+        }
     }
 
 }
