@@ -76,7 +76,7 @@ public class JobSearchServiceImpl extends ServiceImpl<JobSearchMapper, JobSearch
         Page<JobSearch> jobSearchPage = new Page<>(page, size);
         QueryWrapper<JobSearch> queryWrapper = new QueryWrapper<>();
         queryWrapper.and(wrapper ->
-                wrapper.like("major_requirement", major).or().eq("major_requirement", "无")
+                wrapper.like("major_requirement", major).or().eq("major_requirement", "无").or().eq("money", "面议")
         );
 
         // 查询数据
@@ -120,15 +120,20 @@ public class JobSearchServiceImpl extends ServiceImpl<JobSearchMapper, JobSearch
             }
 
             // 薪资匹配
-            if (lowSalaryValue != null) {
-                int jobSalary = switch (job.getMoney()) {
-                    case "2000-5000" -> 2000;
-                    case "5000-8000" -> 5000;
-                    case "8000-15000" -> 8000;
-                    case "15000以上" -> 15000;
-                    default -> 0;
-                };
-                if (jobSalary >= lowSalaryValue) {
+            if (lowSalaryValue != null || "面议".equals(job.getMoney())) {
+                int jobSalary = 0;
+                if (!"面议".equals(job.getMoney())) {
+                    jobSalary = switch (job.getMoney()) {
+                        case "2000-5000" -> 2000;
+                        case "5000-8000" -> 5000;
+                        case "8000-15000" -> 8000;
+                        case "15000以上" -> 15000;
+                        default -> 0;
+                    };
+                }
+
+                // 如果 money 为 "面议" 或薪资匹配条件满足
+                if ("面议".equals(job.getMoney()) || jobSalary >= lowSalaryValue) {
                     matchCount++;
                 }
             }
@@ -153,6 +158,7 @@ public class JobSearchServiceImpl extends ServiceImpl<JobSearchMapper, JobSearch
             job.setMatchLevel(matchLevel);
             job.setMatchCount(matchCount); // 添加 matchCount 作为排序依据
         }
+
 
 
 
