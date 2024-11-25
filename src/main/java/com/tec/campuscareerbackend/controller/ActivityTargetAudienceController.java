@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -101,27 +102,32 @@ public class ActivityTargetAudienceController {
     @PostMapping("/importExcel")
     public R<String> importActivityTargetAudienceExcel(@RequestParam("file") MultipartFile file) {
         try {
-            // 读取Excel数据并过滤只获取需要的字段
+            // 使用 EasyExcel 读取 Excel 数据
             List<ActivityTargetAudienceExcelDto> audienceList = EasyExcel.read(file.getInputStream())
                     .head(ActivityTargetAudienceExcelDto.class)
                     .sheet()
                     .doReadSync();
 
-            for (ActivityTargetAudienceExcelDto dto : audienceList) {
-                // 检查关键字段是否为空，判断是否为空白行
-                if (dto.getAudienceLabel() == null || dto.getAudienceLabel().isEmpty()) {
-                    // 遇到空白行，跳出循环并返回成功
-                    return R.ok("导入成功");
-                }
+            // 过滤掉空白行
+            List<ActivityTargetAudienceExcelDto> validAudienceList = audienceList.stream()
+                    .filter(dto -> dto.getAudienceLabel() != null && !dto.getAudienceLabel().isEmpty())
+                    .collect(Collectors.toList());
 
-                // 保存到 activity_target_audience 表
-                ActivityTargetAudience activityTargetAudience = new ActivityTargetAudience();
-                activityTargetAudience.setAudienceLabel(dto.getAudienceLabel());
-                activityTargetAudience.setAudienceValue(dto.getAudienceValue());
+            // 将 DTO 转换为实体列表
+            List<ActivityTargetAudience> audienceEntities = validAudienceList.stream().map(dto -> {
+                ActivityTargetAudience entity = new ActivityTargetAudience();
+                entity.setId(dto.getId());
+                entity.setMajor(dto.getMajor());
+                entity.setAudienceLabel(dto.getAudienceLabel());
+                entity.setAudienceValue(dto.getAudienceValue());
+                return entity;
+            }).collect(Collectors.toList());
 
-                // 保存到数据库
-                activityTargetAudienceService.save(activityTargetAudience);
+            // 批量保存或更新
+            if (!audienceEntities.isEmpty()) {
+                activityTargetAudienceService.saveOrUpdateBatch(audienceEntities);
             }
+
             return R.ok("导入成功");
         } catch (Exception e) {
             e.printStackTrace();

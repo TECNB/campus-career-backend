@@ -5,11 +5,13 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tec.campuscareerbackend.entity.EmploymentSearch;
 import com.tec.campuscareerbackend.entity.JobSearch;
 import com.tec.campuscareerbackend.entity.UserDetail;
+import com.tec.campuscareerbackend.mapper.ActivityTargetAudienceMapper;
 import com.tec.campuscareerbackend.mapper.EmploymentSearchMapper;
 import com.tec.campuscareerbackend.mapper.JobSearchMapper;
 import com.tec.campuscareerbackend.mapper.UserDetailMapper;
 import com.tec.campuscareerbackend.service.IJobSearchService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -32,37 +34,27 @@ public class JobSearchServiceImpl extends ServiceImpl<JobSearchMapper, JobSearch
     private UserDetailMapper userDetailMapper;
     @Autowired
     private EmploymentSearchMapper employmentSearchMapper;
+    @Autowired
+    private ActivityTargetAudienceMapper activityTargetAudienceMapper;
 
     private static final Map<String, String> CLASS_MAJOR_MAP = new HashMap<>();
 
-    static {
-        // 建立 className 和专业的对应关系
-        CLASS_MAJOR_MAP.put("电子2101", "电气自动化");
-        CLASS_MAJOR_MAP.put("电子2102", "电气自动化");
-        CLASS_MAJOR_MAP.put("电子2103", "电气自动化");
-        CLASS_MAJOR_MAP.put("电子2104", "电气自动化");
-        CLASS_MAJOR_MAP.put("电（专）2301", "电气自动化");
-        CLASS_MAJOR_MAP.put("电（专）2302", "电气自动化");
+    @PostConstruct
+    public void initClassMajorMap() {
+        // 从数据库中加载 audienceValue 和 major 的对应关系
+        List<Map<String, String>> audienceMajorList = activityTargetAudienceMapper.getAudienceMajorMapping();
+        for (Map<String, String> entry : audienceMajorList) {
+            String audienceValue = entry.get("audienceValue");
+            String major = entry.get("major");
+            if (audienceValue != null && major != null) {
+                CLASS_MAJOR_MAP.put(audienceValue, major);
+            }
+        }
+    }
 
-        CLASS_MAJOR_MAP.put("计算机2101", "计算机科学");
-        CLASS_MAJOR_MAP.put("计算机2102", "计算机科学");
-        CLASS_MAJOR_MAP.put("计算机2103", "计算机科学");
-        CLASS_MAJOR_MAP.put("计算机2104", "计算机科学");
-        CLASS_MAJOR_MAP.put("计（专）2301", "计算机科学");
-        CLASS_MAJOR_MAP.put("计（专）2302", "计算机科学");
-        CLASS_MAJOR_MAP.put("软（专）2301", "计算机科学");
-        CLASS_MAJOR_MAP.put("软（专）2302", "计算机科学");
-
-        CLASS_MAJOR_MAP.put("软件2101", "软件工程");
-        CLASS_MAJOR_MAP.put("软件2102", "软件工程");
-        CLASS_MAJOR_MAP.put("软件2202", "软件工程");
-        CLASS_MAJOR_MAP.put("软（专）2301", "软件工程");
-        CLASS_MAJOR_MAP.put("软（专）2302", "软件工程");
-
-        CLASS_MAJOR_MAP.put("自动化2101", "机械自动化");
-        CLASS_MAJOR_MAP.put("自动化2102", "机械自动化");
-        CLASS_MAJOR_MAP.put("自（专）2301", "机械自动化");
-        CLASS_MAJOR_MAP.put("自（专）2302", "机械自动化");
+    // 提供一个方法获取 CLASS_MAJOR_MAP
+    public Map<String, String> getClassMajorMap() {
+        return CLASS_MAJOR_MAP;
     }
 
     @Override

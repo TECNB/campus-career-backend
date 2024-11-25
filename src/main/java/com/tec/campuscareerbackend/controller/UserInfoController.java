@@ -138,21 +138,6 @@ public class UserInfoController {
                 userInfo.setBranchDeputySecretary(dto.getBranchDeputySecretary());
                 userInfoService.save(userInfo);
 
-//                // 初始化保存到 users 表
-//                Users user = new Users();
-//                user.setStudentId(dto.getStudentId());
-//                user.setUsername(dto.getName());
-//
-//                // 生成初始密码为学号后6位
-//                String initialPassword = dto.getStudentId().substring(dto.getStudentId().length() - 6);
-//                String salt = generateSalt();
-//                String passwordHash = encryptHv(initialPassword, salt);
-//
-//                user.setPasswordHash(passwordHash);
-//                user.setSalt(salt);
-//                user.setUserType("student");
-//                user.setPhone(dto.getCounselorPhone());
-//                usersService.save(user);
             }
             return R.ok("导入成功");
         } catch (Exception e) {

@@ -31,6 +31,8 @@ public class ActivityTargetAudience implements Serializable {
     @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
 
+    private String major;
+
     private String audienceLabel;
 
     private String audienceValue;
