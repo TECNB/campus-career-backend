@@ -79,6 +79,16 @@ public class UserInfoController {
         return R.ok(userInfo);
     }
 
+    // 批量删除用户信息
+    @DeleteMapping("/batch")
+    public R<String> deleteUserInfoBatch(@RequestBody List<Integer> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return R.error("ID列表为空");
+        }
+        userInfoService.removeByIds(ids);
+        return R.ok("删除成功");
+    }
+
     @PostMapping("/importExcel")
     public R<String> importExcel(@RequestParam("file") MultipartFile file) {
         try {

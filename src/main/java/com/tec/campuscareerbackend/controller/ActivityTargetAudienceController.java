@@ -67,6 +67,13 @@ public class ActivityTargetAudienceController {
         return R.ok(activityTargetAudience);
     }
 
+    // 批量删除活动对象
+    @DeleteMapping("/batch")
+    public R<String> deleteActivityTargetAudienceBatch(@RequestBody List<Integer> ids) {
+        activityTargetAudienceService.removeByIds(ids);
+        return R.ok("删除成功");
+    }
+
     @GetMapping("/search")
     public R<Page<ActivityTargetAudience>> searchActivityTargetAudience(
             @RequestParam(required = false) String filterField,

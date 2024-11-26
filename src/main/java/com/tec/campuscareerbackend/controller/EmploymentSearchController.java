@@ -10,6 +10,8 @@ import com.tec.campuscareerbackend.service.*;
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * <p>
  *  前端控制器
@@ -83,6 +85,20 @@ public class EmploymentSearchController {
     public R<EmploymentSearch> updateEmploymentSearch(@RequestBody EmploymentSearch employmentSearch) {
         employmentSearchService.updateById(employmentSearch);
         return R.ok(employmentSearch);
+    }
+
+    // 批量删除就业信息
+    @DeleteMapping("/batch")
+    public R<String> deleteEmploymentSearchBatch(@RequestBody List<Integer> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return R.error("删除失败，ID列表不能为空！");
+        }
+        boolean result = employmentSearchService.removeByIds(ids);
+        if (result) {
+            return R.ok("删除成功！");
+        } else {
+            return R.error("删除失败！");
+        }
     }
 
     // 搜索就业信息

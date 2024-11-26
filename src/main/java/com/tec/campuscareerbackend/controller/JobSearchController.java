@@ -72,7 +72,7 @@ public class JobSearchController {
 
     // 批量删除岗位发布详情
     @DeleteMapping("/batch")
-    public R<?> deleteJobSearchBatch(@RequestBody List<Long> ids) {
+    public R<String> deleteJobSearchBatch(@RequestBody List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return R.error("删除失败，ID列表不能为空！");
         }

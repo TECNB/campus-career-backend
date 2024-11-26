@@ -63,6 +63,13 @@ public class ActivityPlaceController {
         return R.ok(activityPlace);
     }
 
+    // 批量删除活动地点
+    @DeleteMapping("/batch")
+    public R<String> deleteActivityPlaceBatch(@RequestBody List<Integer> ids) {
+        activityPlaceService.removeByIds(ids);
+        return R.ok("删除成功");
+    }
+
     // 搜索活动地点
     @GetMapping("/search")
     public R<List<ActivityPlace>> searchActivityPlace(

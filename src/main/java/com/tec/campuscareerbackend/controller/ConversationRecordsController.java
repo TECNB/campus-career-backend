@@ -79,6 +79,13 @@ public class ConversationRecordsController {
         return R.ok(conversationRecords);
     }
 
+    // 批量删除谈话记录
+    @DeleteMapping("/batch")
+    public R<String> deleteConversationRecordsBatch(@RequestBody List<Integer> ids) {
+        conversationRecordsService.removeByIds(ids);
+        return R.ok("删除成功");
+    }
+
     @PostMapping("/importExcel")
     public R<String> importExcel(@RequestParam("file") MultipartFile file) {
         try {

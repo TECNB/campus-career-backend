@@ -110,6 +110,19 @@ public class EmploymentDatabaseController {
         return R.ok(employmentDatabase);
     }
 
+    // 批量删除就业信息
+    @DeleteMapping("/batch")
+    public R<String> deleteEmploymentDatabaseBatch(@RequestBody List<Integer> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return R.error("删除失败，ID列表不能为空！");
+        }
+        for (Integer id : ids) {
+            employmentDatabaseService.removeById(id);
+            employmentDatabaseAttachmentService.deleteAllAttachment(id);
+        }
+        return R.ok("删除成功！");
+    }
+
     @PostMapping("/download")
     public ResponseEntity<ByteArrayResource> downloadAttachmentsZip(@RequestBody EmploymentDatabase employmentDatabase) {
         List<EmploymentDatabaseAttachment> urls = employmentDatabase.getAttachment();
