@@ -166,6 +166,7 @@ public class JobSearchController {
             // 将 DTO 转换为实体列表
             List<JobSearch> jobEntities = validJobList.stream().map(dto -> {
                 JobSearch entity = new JobSearch();
+                entity.setId(dto.getId());
                 entity.setCompanyName(dto.getCompanyName());
                 entity.setPositionName(dto.getPositionName());
                 entity.setHrName(dto.getHrName());

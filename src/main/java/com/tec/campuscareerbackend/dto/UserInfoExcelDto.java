@@ -6,7 +6,7 @@ import lombok.Data;
 @Data
 public class UserInfoExcelDto {
 
-    @ExcelProperty("用户ID")
+    @ExcelProperty("序号")
     private Integer id;
 
     @ExcelProperty("姓名")
@@ -60,22 +60,22 @@ public class UserInfoExcelDto {
     @ExcelProperty("户口所在地")
     private String residence;
 
-    @ExcelProperty("家庭住址")
+    @ExcelProperty("家庭地址")
     private String homeAddress;
 
-    @ExcelProperty("辅导员姓名")
+    @ExcelProperty("辅导员")
     private String counselor;
 
     @ExcelProperty("辅导员手机号")
     private String counselorPhone;
 
-    @ExcelProperty("班主任姓名")
+    @ExcelProperty("班主任")
     private String classTeacher;
 
     @ExcelProperty("班主任手机号")
     private String classTeacherPhone;
 
-    @ExcelProperty("毕设导师姓名")
+    @ExcelProperty("毕设导师")
     private String graduationTutor;
 
     @ExcelProperty("毕设导师手机号")
@@ -84,7 +84,7 @@ public class UserInfoExcelDto {
     @ExcelProperty("寝室号")
     private String dormitoryNumber;
 
-    @ExcelProperty("红旗网络")
+    @ExcelProperty("红旗网格")
     private String networkStatus;
 
     @ExcelProperty("寝室成员名单")

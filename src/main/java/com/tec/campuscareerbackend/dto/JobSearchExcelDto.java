@@ -7,6 +7,9 @@ import java.time.LocalDateTime;
 
 @Data
 public class JobSearchExcelDto {
+    @ExcelProperty("序号")
+    private Integer id;
+
     @ExcelProperty("招聘企业")
     private String companyName;
 
@@ -28,7 +31,7 @@ public class JobSearchExcelDto {
     @ExcelProperty("薪资待遇")
     private String money;
 
-    @ExcelProperty("工作地点")
+    @ExcelProperty("地区")
     private String area;
 
     @ExcelProperty("网申链接")

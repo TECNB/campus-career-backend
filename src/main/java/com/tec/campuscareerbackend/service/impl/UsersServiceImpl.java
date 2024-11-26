@@ -31,7 +31,7 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
     @Override
     public boolean checkUserExistByUserId(String userId) {
         // 根据用户id查询用户
-        return this.lambdaQuery().eq(Users::getUserId, userId).count() > 0;
+        return this.lambdaQuery().eq(Users::getStudentId, userId).count() > 0;
     }
 
     @Override

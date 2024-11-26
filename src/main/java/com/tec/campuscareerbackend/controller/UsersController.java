@@ -71,7 +71,7 @@ public class UsersController {
         String salt = user.getSalt();
         String hv = user.getPasswordHash();
         if (hv.equals(encryptHv(users.getPasswordHash(), salt))) {
-            user.setToken(StpUtil.createLoginSession(user.getUserId()));
+            user.setToken(StpUtil.createLoginSession(user.getStudentId()));
             user.setLastLogin(getCurrentTime());
             usersService.updateById(user);
             return user;

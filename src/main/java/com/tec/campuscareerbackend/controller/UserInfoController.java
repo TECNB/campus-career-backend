@@ -14,8 +14,10 @@ import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.security.NoSuchAlgorithmException;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.tec.campuscareerbackend.utils.Utils.*;
 import static com.tec.campuscareerbackend.utils.Utils.parseDate;
@@ -81,87 +83,116 @@ public class UserInfoController {
     public R<String> importExcel(@RequestParam("file") MultipartFile file) {
         try {
             // 定义日期格式解析器
-            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
 
-            // 读取Excel数据并解析为 UserInfoExcelDto 对象列表
+            // 使用 EasyExcel 读取 Excel 数据
             List<UserInfoExcelDto> userList = EasyExcel.read(file.getInputStream())
                     .head(UserInfoExcelDto.class)
                     .sheet()
-                    .doReadSync();
+                    .doReadSync()
+                    .stream()
+                    .map(dto -> (UserInfoExcelDto) dto) // 确保类型转换
+                    .filter(dto -> dto.getName() != null && !dto.getName().isEmpty()) // 过滤空白行
+                    .collect(Collectors.toList());
 
-            for (UserInfoExcelDto dto : userList) {
-                // 判断是否为空白行
-                if (dto.getName() == null || dto.getName().isEmpty()) {
-                    continue; // 跳过空白行
-                }
-
-                // 保存到 user_info 表
-                UserInfo userInfo = new UserInfo();
-                userInfo.setId(dto.getId());
-                userInfo.setName(dto.getName());
-                userInfo.setGender(dto.getGender());
-                userInfo.setStudentId(dto.getStudentId());
-                userInfo.setIdCard(dto.getIdCard());
-                userInfo.setGrade(dto.getGrade());
-                userInfo.setMajor(dto.getMajor());
-                userInfo.setClassName(dto.getClassName());
-                userInfo.setClassRole(dto.getClassRole());
-                userInfo.setNativePlace(dto.getNativePlace());
-                userInfo.setSourcePlace(dto.getSourcePlace());
-                userInfo.setEthnicity(dto.getEthnicity());
-                userInfo.setResidence(dto.getResidence());
-                userInfo.setHomeAddress(dto.getHomeAddress());
-                userInfo.setCounselor(dto.getCounselor());
-                userInfo.setCounselorPhone(dto.getCounselorPhone());
-                userInfo.setClassTeacher(dto.getClassTeacher());
-                userInfo.setClassTeacherPhone(dto.getClassTeacherPhone());
-                userInfo.setGraduationTutor(dto.getGraduationTutor());
-                userInfo.setGraduationTutorPhone(dto.getGraduationTutorPhone());
-                userInfo.setDormitoryNumber(dto.getDormitoryNumber());
-                userInfo.setNetworkStatus(dto.getNetworkStatus());
-                userInfo.setDormitoryMembers(dto.getDormitoryMembers());
-                userInfo.setPoliticalStatus(dto.getPoliticalStatus());
-                userInfo.setPartyProgress(dto.getPartyProgress());
-                userInfo.setPartyTrainingProgress(dto.getPartyTrainingProgress());
-                userInfo.setBranchName(dto.getBranchName());
-
-                // 日期字段转换
-                userInfo.setSpecialization(dto.getSpecialization());
-                userInfo.setBirthDate(parseDate(dto.getBirthDate(), dateFormatter));
-                userInfo.setAdmissionDate(parseDate(dto.getAdmissionDate(), dateFormatter));
-                userInfo.setExpectedGraduation(parseDate(dto.getExpectedGraduation(), dateFormatter));
-                userInfo.setApplicationDate(parseDate(dto.getApplicationDate(), dateFormatter));
-                userInfo.setActivistDate(parseDate(dto.getActivistDate(), dateFormatter));
-                userInfo.setDevelopmentDate(parseDate(dto.getDevelopmentDate(), dateFormatter));
-                userInfo.setProbationaryDate(parseDate(dto.getProbationaryDate(), dateFormatter));
-                userInfo.setFullMemberDate(parseDate(dto.getFullMemberDate(), dateFormatter));
-
-                userInfo.setPartyHours(dto.getPartyHours());
-                userInfo.setBranchSecretary(dto.getBranchSecretary());
-                userInfo.setBranchDeputySecretary(dto.getBranchDeputySecretary());
-                userInfoService.save(userInfo);
-
-                // 初始化保存到 users 表
-                Users user = new Users();
-                user.setStudentId(dto.getStudentId());
-                user.setUsername(dto.getName());
-
-                // 生成初始密码为学号后6位
-                String initialPassword = dto.getStudentId().substring(dto.getStudentId().length() - 6);
-                String salt = generateSalt();
-                String passwordHash = encryptHv(initialPassword, salt);
-
-                user.setPasswordHash(passwordHash);
-                user.setSalt(salt);
-                user.setUserType("student");
-                user.setPhone(dto.getCounselorPhone());
-                usersService.save(user);
+            if (userList.isEmpty()) {
+                return R.ok("导入数据为空");
             }
+
+            // DTO 转换为实体
+            List<UserInfo> userInfoList = userList.stream()
+                    .map(dto -> mapToUserInfo(dto, dateFormatter))
+                    .collect(Collectors.toList());
+
+            // 批量保存 UserInfo
+            userInfoService.saveOrUpdateBatch(userInfoList);
+
+            // 批量初始化 Users
+            List<Users> usersList = userList.stream()
+                    .map(dto -> {
+                        try {
+                            return mapToUsers(dto);
+                        } catch (NoSuchAlgorithmException e) {
+                            throw new RuntimeException(e);
+                        }
+                    })
+                    .collect(Collectors.toList());
+
+            usersService.saveOrUpdateBatch(usersList);
+
             return R.ok("导入成功");
         } catch (Exception e) {
             e.printStackTrace();
             return R.error("导入失败: " + e.getMessage());
         }
+    }
+
+    /**
+     * 将 DTO 转换为 UserInfo 实体
+     */
+    private UserInfo mapToUserInfo(UserInfoExcelDto dto, DateTimeFormatter dateFormatter) {
+        UserInfo userInfo = new UserInfo();
+        userInfo.setId(dto.getId());
+        userInfo.setName(dto.getName());
+        userInfo.setPhone(dto.getPhone());
+        userInfo.setGender(dto.getGender());
+        userInfo.setStudentId(dto.getStudentId());
+        userInfo.setIdCard(dto.getIdCard());
+        userInfo.setGrade(dto.getGrade());
+        userInfo.setMajor(dto.getMajor());
+        userInfo.setClassName(dto.getClassName());
+        userInfo.setClassRole(dto.getClassRole());
+        userInfo.setNativePlace(dto.getNativePlace());
+        userInfo.setSourcePlace(dto.getSourcePlace());
+        userInfo.setEthnicity(dto.getEthnicity());
+        userInfo.setResidence(dto.getResidence());
+        userInfo.setHomeAddress(dto.getHomeAddress());
+        userInfo.setCounselor(dto.getCounselor());
+        userInfo.setCounselorPhone(dto.getCounselorPhone());
+        userInfo.setClassTeacher(dto.getClassTeacher());
+        userInfo.setClassTeacherPhone(dto.getClassTeacherPhone());
+        userInfo.setGraduationTutor(dto.getGraduationTutor());
+        userInfo.setGraduationTutorPhone(dto.getGraduationTutorPhone());
+        userInfo.setDormitoryNumber(dto.getDormitoryNumber());
+        userInfo.setNetworkStatus(dto.getNetworkStatus());
+        userInfo.setDormitoryMembers(dto.getDormitoryMembers());
+        userInfo.setPoliticalStatus(dto.getPoliticalStatus());
+        userInfo.setPartyProgress(dto.getPartyProgress());
+        userInfo.setPartyTrainingProgress(dto.getPartyTrainingProgress());
+        userInfo.setBranchName(dto.getBranchName());
+        userInfo.setSpecialization(dto.getSpecialization());
+        userInfo.setBirthDate(parseDate(dto.getBirthDate(), dateFormatter));
+        userInfo.setAdmissionDate(parseDate(dto.getAdmissionDate(), dateFormatter));
+        userInfo.setExpectedGraduation(parseDate(dto.getExpectedGraduation(), dateFormatter));
+        userInfo.setApplicationDate(parseDate(dto.getApplicationDate(), dateFormatter));
+        userInfo.setActivistDate(parseDate(dto.getActivistDate(), dateFormatter));
+        userInfo.setDevelopmentDate(parseDate(dto.getDevelopmentDate(), dateFormatter));
+        userInfo.setProbationaryDate(parseDate(dto.getProbationaryDate(), dateFormatter));
+        userInfo.setFullMemberDate(parseDate(dto.getFullMemberDate(), dateFormatter));
+        userInfo.setPartyHours(dto.getPartyHours());
+        userInfo.setBranchSecretary(dto.getBranchSecretary());
+        userInfo.setBranchDeputySecretary(dto.getBranchDeputySecretary());
+        return userInfo;
+    }
+
+    /**
+     * 将 DTO 转换为 Users 实体
+     */
+    private Users mapToUsers(UserInfoExcelDto dto) throws NoSuchAlgorithmException {
+        Users user = new Users();
+        user.setStudentId(dto.getStudentId());
+        user.setUsername(dto.getName());
+
+        // 生成初始密码为学号后6位
+        String initialPassword = dto.getStudentId().substring(dto.getStudentId().length() - 6);
+        String salt = generateSalt();
+        String passwordHash = encryptHv(initialPassword, salt);
+
+        user.setPasswordHash(passwordHash);
+        user.setSalt(salt);
+        user.setUserType("student");
+        user.setPhone(dto.getCounselorPhone());
+        return user;
     }
 
 }

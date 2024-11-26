@@ -68,6 +68,7 @@ public class JobSearchServiceImpl extends ServiceImpl<JobSearchMapper, JobSearch
 
         // 2. 根据 className 查找对应的专业
         String major = CLASS_MAJOR_MAP.get(className);
+        System.out.println("该同学专业"+major);
         if (major == null) {
             return new Page<>(); // 若 className 未匹配到对应专业，返回空结果
         }
@@ -76,7 +77,7 @@ public class JobSearchServiceImpl extends ServiceImpl<JobSearchMapper, JobSearch
         Page<JobSearch> jobSearchPage = new Page<>(page, size);
         QueryWrapper<JobSearch> queryWrapper = new QueryWrapper<>();
         queryWrapper.and(wrapper ->
-                wrapper.like("major_requirement", major).or().eq("major_requirement", "无").or().eq("money", "面议")
+                wrapper.like("major_requirement", major).or().eq("major_requirement", "专业不限")
         );
 
         // 查询数据
@@ -114,7 +115,7 @@ public class JobSearchServiceImpl extends ServiceImpl<JobSearchMapper, JobSearch
             int matchCount = 0;
 
             // 专业匹配
-            if ("无".equals(job.getMajorRequirement()) ||
+            if ("专业不限".equals(job.getMajorRequirement()) ||
                     (job.getMajorRequirement() != null && job.getMajorRequirement().contains(major))) {
                 matchCount++;
             }
@@ -141,7 +142,7 @@ public class JobSearchServiceImpl extends ServiceImpl<JobSearchMapper, JobSearch
             // 地点匹配
             if (areaArray != null && job.getArea() != null) {
                 for (String area : areaArray) {
-                    if (job.getArea().contains(area)) {
+                    if (area.contains(job.getArea())) {
                         matchCount++;
                         break;
                     }
