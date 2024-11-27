@@ -86,6 +86,77 @@ public class ConversationRecordsController {
         return R.ok("删除成功");
     }
 
+    // 搜索谈话记录
+    @GetMapping("/search")
+    public R<Page<ConversationRecords>> searchConversationRecords(
+            @RequestParam(required = false) String filterField,
+            @RequestParam(required = false) String filterValue,
+            @RequestParam int page,
+            @RequestParam int size) {
+
+        Page<ConversationRecords> pageRequest = new Page<>(page, size);
+        QueryWrapper<ConversationRecords> queryWrapper = new QueryWrapper<>();
+
+        // 根据字段名动态添加查询条件
+        if (filterField != null && filterValue != null) {
+            switch (filterField) {
+                case "conversationTime":
+                    queryWrapper.like("conversation_time", filterValue);
+                    break;
+                case "university":
+                    queryWrapper.like("university", filterValue);
+                    break;
+                case "conversationTarget":
+                    queryWrapper.like("conversation_target", filterValue);
+                    break;
+                case "participantCount":
+                    queryWrapper.eq("participant_count", filterValue);
+                    break;
+                case "otherTopics":
+                    queryWrapper.like("other_topics", filterValue);
+                    break;
+                case "conversationTopic":
+                    queryWrapper.like("conversation_topic", filterValue);
+                    break;
+                case "studentId":
+                    queryWrapper.eq("student_id", filterValue);
+                    break;
+                case "conversationType":
+                    queryWrapper.like("conversation_type", filterValue);
+                    break;
+                case "parentContact":
+                    queryWrapper.like("parent_contact", filterValue);
+                    break;
+                case "department":
+                    queryWrapper.like("department", filterValue);
+                    break;
+                case "conversationTeacher":
+                    queryWrapper.like("conversation_teacher", filterValue);
+                    break;
+                case "conversationLocation":
+                    queryWrapper.like("conversation_location", filterValue);
+                    break;
+                case "conversationContent":
+                    queryWrapper.like("conversation_content", filterValue);
+                    break;
+                case "status":
+                    queryWrapper.eq("status", filterValue);
+                    break;
+                case "attentionLevel":
+                    queryWrapper.eq("attention_level", filterValue);
+                    break;
+                case "createdAt":
+                    queryWrapper.like("created_at", filterValue);
+                    break;
+                default:
+                    return R.error("无效的筛选字段");
+            }
+        }
+
+        Page<ConversationRecords> result = conversationRecordsService.page(pageRequest, queryWrapper);
+        return R.ok(result);
+    }
+
     @PostMapping("/importExcel")
     public R<String> importExcel(@RequestParam("file") MultipartFile file) {
         try {

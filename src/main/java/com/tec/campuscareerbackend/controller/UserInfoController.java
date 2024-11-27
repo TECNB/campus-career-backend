@@ -79,6 +79,101 @@ public class UserInfoController {
         return R.ok(userInfo);
     }
 
+    // 搜索用户信息
+    @GetMapping("/search")
+    public R<Page<UserInfo>> searchUserInfo(
+            @RequestParam(required = false) String filterField,
+            @RequestParam(required = false) String filterValue,
+            @RequestParam int page,
+            @RequestParam int size) {
+
+        Page<UserInfo> pageRequest = new Page<>(page, size);
+        QueryWrapper<UserInfo> queryWrapper = new QueryWrapper<>();
+
+        // 根据字段名动态添加查询条件
+        if (filterField != null && filterValue != null) {
+            switch (filterField) {
+                case "studentId":
+                    queryWrapper.eq("student_id", filterValue);
+                    break;
+                case "idCard":
+                    queryWrapper.eq("id_card", filterValue);
+                    break;
+                case "grade":
+                    queryWrapper.like("grade", filterValue);
+                    break;
+                case "major":
+                    queryWrapper.like("major", filterValue);
+                    break;
+                case "className":
+                    queryWrapper.like("class_name", filterValue);
+                    break;
+                case "classRole":
+                    queryWrapper.like("class_role", filterValue);
+                    break;
+                case "specialization":
+                    queryWrapper.like("specialization", filterValue);
+                    break;
+                case "birthDate":
+                    queryWrapper.eq("birth_date", filterValue);
+                    break;
+                case "admissionDate":
+                    queryWrapper.eq("admission_date", filterValue);
+                    break;
+                case "expectedGraduation":
+                    queryWrapper.eq("expected_graduation", filterValue);
+                    break;
+                case "nativePlace":
+                    queryWrapper.like("native_place", filterValue);
+                    break;
+                case "sourcePlace":
+                    queryWrapper.like("source_place", filterValue);
+                    break;
+                case "ethnicity":
+                    queryWrapper.like("ethnicity", filterValue);
+                    break;
+                case "residence":
+                    queryWrapper.like("residence", filterValue);
+                    break;
+                case "homeAddress":
+                    queryWrapper.like("home_address", filterValue);
+                    break;
+                case "counselor":
+                    queryWrapper.like("counselor", filterValue);
+                    break;
+                case "counselorPhone":
+                    queryWrapper.eq("counselor_phone", filterValue);
+                    break;
+                case "classTeacher":
+                    queryWrapper.like("class_teacher", filterValue);
+                    break;
+                case "classTeacherPhone":
+                    queryWrapper.eq("class_teacher_phone", filterValue);
+                    break;
+                case "graduationTutor":
+                    queryWrapper.like("graduation_tutor", filterValue);
+                    break;
+                case "graduationTutorPhone":
+                    queryWrapper.eq("graduation_tutor_phone", filterValue);
+                    break;
+                case "dormitoryNumber":
+                    queryWrapper.like("dormitory_number", filterValue);
+                    break;
+                case "networkStatus":
+                    queryWrapper.eq("network_status", filterValue);
+                    break;
+                case "dormitoryMembers":
+                    queryWrapper.like("dormitory_members", filterValue);
+                    break;
+                default:
+                    return R.error("无效的筛选字段");
+            }
+        }
+
+        Page<UserInfo> result = userInfoService.page(pageRequest, queryWrapper);
+        return R.ok(result);
+    }
+
     // 批量删除用户信息
     @DeleteMapping("/batch")
     public R<String> deleteUserInfoBatch(@RequestBody List<Integer> ids) {

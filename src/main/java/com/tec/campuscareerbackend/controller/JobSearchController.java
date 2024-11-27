@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -147,6 +148,87 @@ public class JobSearchController {
                                                    @RequestParam(defaultValue = "10") int size) {
         Page<JobSearch> result = jobSearchService.matchJobsByStudentId(studentId, page, size);
         return R.ok(result);
+    }
+
+    // 搜索匹配后的岗位
+    @GetMapping("/search-match")
+    public R<Page<JobSearch>> searchMatch(
+            @RequestParam String studentId, // 学生ID，用于获取匹配结果
+            @RequestParam(required = false) String filterField, // 筛选字段
+            @RequestParam(required = false) String filterValue, // 筛选值
+            @RequestParam(defaultValue = "1") int page, // 分页页码
+            @RequestParam(defaultValue = "10") int size // 每页数量
+    ) {
+        // 1. 调用 match 接口获取匹配的岗位
+        Page<JobSearch> result = jobSearchService.matchJobsByStudentId(studentId, page, size);
+        List<JobSearch> matchedJobs = result.getRecords();
+
+        if (matchedJobs == null || matchedJobs.isEmpty()) {
+            return R.ok(new Page<>(page, size)); // 返回空分页
+        }
+
+        // 2. 筛选匹配的岗位
+        Stream<JobSearch> jobStream = matchedJobs.stream();
+
+        if (filterField != null && filterValue != null) {
+            switch (filterField) {
+                case "matchLevel":
+                    jobStream = jobStream.filter(job -> job.getMatchLevel().equals(filterValue));
+                    break;
+                case "companyName":
+                    jobStream = jobStream.filter(job -> job.getCompanyName().contains(filterValue));
+                    break;
+                case "positionName":
+                    jobStream = jobStream.filter(job -> job.getPositionName().contains(filterValue));
+                    break;
+                case "hrName":
+                    jobStream = jobStream.filter(job -> job.getHrName().contains(filterValue));
+                    break;
+                case "hrPhone":
+                    jobStream = jobStream.filter(job -> job.getHrPhone().contains(filterValue));
+                    break;
+                case "majorRequirement":
+                    jobStream = jobStream.filter(job -> job.getMajorRequirement().contains(filterValue));
+                    break;
+                case "participantCount":
+                    try {
+                        int count = Integer.parseInt(filterValue);
+                        jobStream = jobStream.filter(job -> job.getParticipantCount() == count);
+                    } catch (NumberFormatException e) {
+                        return R.error("无效的筛选值: participantCount 应为数字");
+                    }
+                    break;
+                case "money":
+                    jobStream = jobStream.filter(job -> job.getMoney().contains(filterValue));
+                    break;
+                case "area":
+                    jobStream = jobStream.filter(job -> job.getArea().contains(filterValue));
+                    break;
+                case "applicationLink":
+                    jobStream = jobStream.filter(job -> job.getApplicationLink().contains(filterValue));
+                    break;
+                case "additionalRequirements":
+                    jobStream = jobStream.filter(job -> job.getAdditionalRequirements().contains(filterValue));
+                    break;
+                case "companyDescription":
+                    jobStream = jobStream.filter(job -> job.getCompanyDescription().contains(filterValue));
+                    break;
+                default:
+                    return R.error("无效的筛选字段");
+            }
+        }
+
+        // 3. 分页处理
+        List<JobSearch> filteredJobs = jobStream.collect(Collectors.toList());
+        int total = filteredJobs.size();
+        int fromIndex = Math.min((page - 1) * size, total);
+        int toIndex = Math.min(page * size, total);
+        List<JobSearch> pagedJobs = filteredJobs.subList(fromIndex, toIndex);
+
+        // 4. 封装分页结果
+        Page<JobSearch> resultPage = new Page<>(page, size, total);
+        resultPage.setRecords(pagedJobs);
+        return R.ok(resultPage);
     }
 
     @PostMapping("/importExcel")
