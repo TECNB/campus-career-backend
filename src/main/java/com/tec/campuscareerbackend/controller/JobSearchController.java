@@ -9,9 +9,12 @@ import com.tec.campuscareerbackend.dto.JobSearchExcelDto;
 import com.tec.campuscareerbackend.entity.JobSearch;
 import com.tec.campuscareerbackend.service.IJobSearchService;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -249,6 +252,7 @@ public class JobSearchController {
             List<JobSearch> jobEntities = validJobList.stream().map(dto -> {
                 JobSearch entity = new JobSearch();
                 entity.setId(dto.getId());
+                entity.setDisplayId(dto.getDisplayId());
                 entity.setCompanyName(dto.getCompanyName());
                 entity.setPositionName(dto.getPositionName());
                 entity.setHrName(dto.getHrName());
@@ -273,6 +277,65 @@ public class JobSearchController {
             e.printStackTrace();
             return R.error("导入失败: " + e.getMessage());
         }
+    }
+
+    @GetMapping("/exportExcel")
+    public void exportJobSearchExcel(HttpServletResponse response) {
+        try {
+            // 查询数据库中的 JobSearch 数据
+            List<JobSearch> jobSearchList = jobSearchService.list();
+
+            if (jobSearchList.isEmpty()) {
+                throw new RuntimeException("无数据可导出");
+            }
+
+            // 将实体对象转换为 DTO 对象
+            List<JobSearchExcelDto> jobSearchDtoList = jobSearchList.stream()
+                    .map(this::mapToJobSearchExcelDto)
+                    .collect(Collectors.toList());
+
+            // 设置响应头，确保文件正确下载
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.setCharacterEncoding("utf-8");
+            String fileName = URLEncoder.encode("求职信息", "UTF-8").replaceAll("\\+", "%20");
+            response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + fileName + ".xlsx");
+
+            // 使用 EasyExcel 写入数据到响应流
+            EasyExcel.write(response.getOutputStream(), JobSearchExcelDto.class)
+                    .sheet("岗位信息")
+                    .doWrite(jobSearchDtoList);
+        } catch (Exception e) {
+            e.printStackTrace();
+            try {
+                // 导出失败时返回 JSON 错误信息
+                response.setContentType("application/json");
+                response.setCharacterEncoding("utf-8");
+                response.getWriter().write("{\"message\":\"导出失败: " + e.getMessage() + "\"}");
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * 将 JobSearch 实体对象转换为 JobSearchExcelDto
+     */
+    private JobSearchExcelDto mapToJobSearchExcelDto(JobSearch jobSearch) {
+        JobSearchExcelDto dto = new JobSearchExcelDto();
+        dto.setId(jobSearch.getId());
+        dto.setDisplayId(jobSearch.getDisplayId());
+        dto.setCompanyName(jobSearch.getCompanyName());
+        dto.setPositionName(jobSearch.getPositionName());
+        dto.setHrName(jobSearch.getHrName());
+        dto.setHrPhone(jobSearch.getHrPhone());
+        dto.setMajorRequirement(jobSearch.getMajorRequirement());
+        dto.setParticipantCount(jobSearch.getParticipantCount());
+        dto.setMoney(jobSearch.getMoney());
+        dto.setArea(jobSearch.getArea());
+        dto.setApplicationLink(jobSearch.getApplicationLink());
+        dto.setAdditionalRequirements(jobSearch.getAdditionalRequirements());
+        dto.setCompanyDescription(jobSearch.getCompanyDescription());
+        return dto;
     }
 
 }

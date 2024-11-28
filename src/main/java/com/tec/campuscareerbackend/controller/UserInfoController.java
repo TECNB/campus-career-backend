@@ -11,9 +11,12 @@ import com.tec.campuscareerbackend.entity.Users;
 import com.tec.campuscareerbackend.service.IUserInfoService;
 import com.tec.campuscareerbackend.service.IUsersService;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.net.URLEncoder;
 import java.security.NoSuchAlgorithmException;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -21,6 +24,7 @@ import java.util.stream.Collectors;
 
 import static com.tec.campuscareerbackend.utils.Utils.*;
 import static com.tec.campuscareerbackend.utils.Utils.parseDate;
+import static com.tec.campuscareerbackend.utils.Utils.formatDate;
 
 /**
  * <p>
@@ -232,6 +236,44 @@ public class UserInfoController {
         }
     }
 
+    @GetMapping("/exportExcel")
+    public void exportExcel(HttpServletResponse response) {
+        try {
+            // 查询数据库中的用户数据
+            List<UserInfo> userInfoList = userInfoService.list();
+
+            if (userInfoList.isEmpty()) {
+                throw new RuntimeException("无数据可导出");
+            }
+
+            // 将实体对象转为 Excel DTO 对象
+            List<UserInfoExcelDto> userInfoExcelDtoList = userInfoList.stream()
+                    .map(this::mapToExcelDto)
+                    .collect(Collectors.toList());
+
+            // 设置响应头
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.setCharacterEncoding("utf-8");
+            String fileName = URLEncoder.encode("用户信息", "UTF-8").replaceAll("\\+", "%20");
+            response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + fileName + ".xlsx");
+
+            // 使用 EasyExcel 写入数据到响应流
+            EasyExcel.write(response.getOutputStream(), UserInfoExcelDto.class)
+                    .sheet("用户信息")
+                    .doWrite(userInfoExcelDtoList);
+        } catch (Exception e) {
+            e.printStackTrace();
+            try {
+                // 在导出失败时返回错误提示
+                response.setContentType("application/json");
+                response.setCharacterEncoding("utf-8");
+                response.getWriter().write("{\"message\":\"导出失败: " + e.getMessage() + "\"}");
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            }
+        }
+    }
+
     /**
      * 将 DTO 转换为 UserInfo 实体
      */
@@ -281,6 +323,54 @@ public class UserInfoController {
     }
 
     /**
+     * 将 UserInfo 转换为 UserInfoExcelDto
+     */
+    private UserInfoExcelDto mapToExcelDto(UserInfo userInfo) {
+        UserInfoExcelDto dto = new UserInfoExcelDto();
+        dto.setId(userInfo.getId());
+        dto.setName(userInfo.getName());
+        dto.setPhone(userInfo.getPhone());
+        dto.setGender(userInfo.getGender());
+        dto.setStudentId(userInfo.getStudentId());
+        dto.setIdCard(userInfo.getIdCard());
+        dto.setGrade(userInfo.getGrade());
+        dto.setMajor(userInfo.getMajor());
+        dto.setClassName(userInfo.getClassName());
+        dto.setClassRole(userInfo.getClassRole());
+        dto.setNativePlace(userInfo.getNativePlace());
+        dto.setSourcePlace(userInfo.getSourcePlace());
+        dto.setEthnicity(userInfo.getEthnicity());
+        dto.setResidence(userInfo.getResidence());
+        dto.setHomeAddress(userInfo.getHomeAddress());
+        dto.setCounselor(userInfo.getCounselor());
+        dto.setCounselorPhone(userInfo.getCounselorPhone());
+        dto.setClassTeacher(userInfo.getClassTeacher());
+        dto.setClassTeacherPhone(userInfo.getClassTeacherPhone());
+        dto.setGraduationTutor(userInfo.getGraduationTutor());
+        dto.setGraduationTutorPhone(userInfo.getGraduationTutorPhone());
+        dto.setDormitoryNumber(userInfo.getDormitoryNumber());
+        dto.setNetworkStatus(userInfo.getNetworkStatus());
+        dto.setDormitoryMembers(userInfo.getDormitoryMembers());
+        dto.setPoliticalStatus(userInfo.getPoliticalStatus());
+        dto.setPartyProgress(userInfo.getPartyProgress());
+        dto.setPartyTrainingProgress(userInfo.getPartyTrainingProgress());
+        dto.setBranchName(userInfo.getBranchName());
+        dto.setSpecialization(userInfo.getSpecialization());
+        dto.setBirthDate(formatDate(userInfo.getBirthDate()));
+        dto.setAdmissionDate(formatDate(userInfo.getAdmissionDate()));
+        dto.setExpectedGraduation(formatDate(userInfo.getExpectedGraduation()));
+        dto.setApplicationDate(formatDate(userInfo.getApplicationDate()));
+        dto.setActivistDate(formatDate(userInfo.getActivistDate()));
+        dto.setDevelopmentDate(formatDate(userInfo.getDevelopmentDate()));
+        dto.setProbationaryDate(formatDate(userInfo.getProbationaryDate()));
+        dto.setFullMemberDate(formatDate(userInfo.getFullMemberDate()));
+        dto.setPartyHours(userInfo.getPartyHours());
+        dto.setBranchSecretary(userInfo.getBranchSecretary());
+        dto.setBranchDeputySecretary(userInfo.getBranchDeputySecretary());
+        return dto;
+    }
+
+    /**
      * 将 DTO 转换为 Users 实体
      */
     private Users mapToUsers(UserInfoExcelDto dto) throws NoSuchAlgorithmException {
@@ -299,5 +389,6 @@ public class UserInfoController {
         user.setPhone(dto.getCounselorPhone());
         return user;
     }
+
 
 }

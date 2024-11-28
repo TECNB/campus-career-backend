@@ -33,6 +33,11 @@ public class JobSearch implements Serializable {
     private Integer id;
 
     /**
+     * 展位号
+     */
+    private Integer displayId;
+
+    /**
      * 企业名称
      */
     private String companyName;

@@ -9,10 +9,12 @@ import com.tec.campuscareerbackend.dto.ConversationRecordsExcelDto;
 import com.tec.campuscareerbackend.entity.ConversationRecords;
 import com.tec.campuscareerbackend.service.IConversationRecordsService;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -161,7 +163,7 @@ public class ConversationRecordsController {
     public R<String> importExcel(@RequestParam("file") MultipartFile file) {
         try {
             // 定义日期格式解析器
-            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd");
+            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
 
             // 读取 Excel 数据
             List<ConversationRecordsExcelDto> conversationList = EasyExcel.read(file.getInputStream())
@@ -191,6 +193,83 @@ public class ConversationRecordsController {
             e.printStackTrace();
             return R.error("导入失败: " + e.getMessage());
         }
+    }
+
+    @GetMapping("/exportExcel")
+    public void exportConversationRecordsExcel(HttpServletResponse response) {
+        try {
+            // 查询数据库中的 ConversationRecords 数据
+            List<ConversationRecords> conversationRecordsList = conversationRecordsService.list();
+
+            if (conversationRecordsList.isEmpty()) {
+                throw new RuntimeException("无数据可导出");
+            }
+
+            // 将实体转换为 DTO
+            List<ConversationRecordsExcelDto> conversationRecordsDtoList = conversationRecordsList.stream()
+                    .map(this::convertToDto)
+                    .collect(Collectors.toList());
+
+            // 设置响应头，确保正确下载文件
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.setCharacterEncoding("utf-8");
+            String fileName = URLEncoder.encode("谈话记录", "UTF-8").replaceAll("\\+", "%20");
+            response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + fileName + ".xlsx");
+
+            // 使用 EasyExcel 写入数据到响应流
+            EasyExcel.write(response.getOutputStream(), ConversationRecordsExcelDto.class)
+                    .sheet("谈话记录")
+                    .doWrite(conversationRecordsDtoList);
+        } catch (Exception e) {
+            e.printStackTrace();
+            try {
+                // 导出失败时返回 JSON 错误信息
+                response.setContentType("application/json");
+                response.setCharacterEncoding("utf-8");
+                response.getWriter().write("{\"message\":\"导出失败: " + e.getMessage() + "\"}");
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * 将 ConversationRecords 实体转换为 ConversationRecordsExcelDto
+     */
+    private ConversationRecordsExcelDto convertToDto(ConversationRecords entity) {
+        ConversationRecordsExcelDto dto = new ConversationRecordsExcelDto();
+        dto.setId(entity.getId());
+        dto.setUniversity(entity.getUniversity());
+        dto.setConversationTarget(entity.getConversationTarget());
+        dto.setParticipantCount(entity.getParticipantCount());
+        dto.setOtherTopics(entity.getOtherTopics());
+        dto.setConversationTopic(entity.getConversationTopic());
+        dto.setStudentId(entity.getStudentId());
+        dto.setConversationType(entity.getConversationType());
+        dto.setParentContact(entity.getParentContact());
+        dto.setDepartment(entity.getDepartment());
+        dto.setConversationTeacher(entity.getConversationTeacher());
+        dto.setConversationLocation(entity.getConversationLocation());
+        dto.setConversationContent(entity.getConversationContent());
+        dto.setStatus(entity.getStatus());
+        dto.setAttentionLevel(entity.getAttentionLevel());
+
+        // 日期字段格式化
+        dto.setConversationTime(formatDate(entity.getConversationTime()));
+        dto.setCreatedAt(formatDate(entity.getCreatedAt()));
+        dto.setUpdatedAt(formatDate(entity.getUpdatedAt()));
+
+        return dto;
+    }
+
+    /**
+     * 将 LocalDate 格式化为字符串
+     */
+    private String formatDate(LocalDate date) {
+        if (date == null) {
+            return null;
+        }
+        return date.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
     }
 
     /**

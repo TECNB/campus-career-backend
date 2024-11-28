@@ -10,6 +10,9 @@ public class JobSearchExcelDto {
     @ExcelProperty("序号")
     private Integer id;
 
+    @ExcelProperty("展位号")
+    private Integer displayId;
+
     @ExcelProperty("招聘企业")
     private String companyName;
 

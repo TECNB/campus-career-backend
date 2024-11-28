@@ -99,4 +99,14 @@ public class Utils {
             return null;
         }
     }
+
+    /**
+     * 将 LocalDate 格式化为字符串（yyyy/M/d）
+     */
+    public static String formatDate(LocalDate date) {
+        if (date == null) {
+            return null;
+        }
+        return date.format(DateTimeFormatter.ofPattern("yyyy/M/d"));
+    }
 }
