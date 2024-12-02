@@ -11,7 +11,7 @@ public class JobSearchExcelDto {
     private Integer id;
 
     @ExcelProperty("展位号")
-    private Integer displayId;
+    private String displayId;
 
     @ExcelProperty("招聘企业")
     private String companyName;

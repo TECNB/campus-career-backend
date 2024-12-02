@@ -35,7 +35,7 @@ public class JobSearch implements Serializable {
     /**
      * 展位号
      */
-    private Integer displayId;
+    private String displayId;
 
     /**
      * 企业名称

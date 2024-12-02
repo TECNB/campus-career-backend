@@ -1,7 +1,12 @@
 package com.tec.campuscareerbackend.dto;
 
+import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
+import com.tec.campuscareerbackend.utils.CustomIntegerConverter;
 import lombok.Data;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Data
 public class UserInfoExcelDto {
@@ -117,7 +122,7 @@ public class UserInfoExcelDto {
     @ExcelProperty("党员转正时间")
     private String fullMemberDate;
 
-    @ExcelProperty("党建工时")
+    @ExcelProperty(value = "党建工时", converter = CustomIntegerConverter.class)
     private Integer partyHours;
 
     @ExcelProperty("党支部书记姓名")
@@ -125,4 +130,7 @@ public class UserInfoExcelDto {
 
     @ExcelProperty("党支部副书记姓名")
     private String branchDeputySecretary;
+
+    @ExcelIgnore
+    private Map<Integer, String> errorMessages = new HashMap<>();
 }

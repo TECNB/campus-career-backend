@@ -10,6 +10,8 @@ import com.tec.campuscareerbackend.entity.UserInfo;
 import com.tec.campuscareerbackend.entity.Users;
 import com.tec.campuscareerbackend.service.IUserInfoService;
 import com.tec.campuscareerbackend.service.IUsersService;
+import com.tec.campuscareerbackend.utils.ErrorCellStyleHandler;
+import com.tec.campuscareerbackend.utils.ExcelImportListener;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.annotation.*;
@@ -18,8 +20,10 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
+import java.time.format.DateTimeParseException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.tec.campuscareerbackend.utils.Utils.*;
@@ -189,23 +193,43 @@ public class UserInfoController {
     }
 
     @PostMapping("/importExcel")
-    public R<String> importExcel(@RequestParam("file") MultipartFile file) {
+    public void importExcel(@RequestParam("file") MultipartFile file, HttpServletResponse response) {
         try {
             // 定义日期格式解析器
             DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
 
-            // 使用 EasyExcel 读取 Excel 数据
-            List<UserInfoExcelDto> userList = EasyExcel.read(file.getInputStream())
-                    .head(UserInfoExcelDto.class)
-                    .sheet()
-                    .doReadSync()
-                    .stream()
-                    .map(dto -> (UserInfoExcelDto) dto) // 确保类型转换
-                    .filter(dto -> dto.getName() != null && !dto.getName().isEmpty()) // 过滤空白行
-                    .collect(Collectors.toList());
+            // 存储读取的数据和错误信息
+            List<UserInfoExcelDto> userList = new ArrayList<>();
+            List<Map<Integer, String>> errorDataList = new ArrayList<>();
 
+            // 使用 EasyExcel 读取 Excel 数据，使用自定义监听器
+            EasyExcel.read(file.getInputStream(), UserInfoExcelDto.class, new ExcelImportListener(userList, dateFormatter, errorDataList))
+                    .sheet()
+                    .doRead();
+
+            // 如果没有数据，则返回提示
             if (userList.isEmpty()) {
-                return R.ok("导入数据为空");
+                response.setContentType("application/json");
+                response.getWriter().write("{\"message\":\"导入数据为空\"}");
+                return;
+            }
+
+            // 检查是否存在错误
+            boolean hasErrors = userList.stream()
+                    .anyMatch(dto -> dto.getErrorMessages() != null && !dto.getErrorMessages().isEmpty());
+
+            if (hasErrors) {
+                // 如果有错误，生成错误文件并返回
+                response.setContentType("application/vnd.ms-excel");
+                response.setCharacterEncoding("utf-8");
+                response.setHeader("Content-Disposition", "attachment;filename=error_data.xlsx");
+
+                // 调用 EasyExcel 写入错误数据
+                EasyExcel.write(response.getOutputStream(), UserInfoExcelDto.class)
+                        .registerWriteHandler(new ErrorCellStyleHandler(errorDataList))
+                        .sheet("错误数据")
+                        .doWrite(userList);
+                return;
             }
 
             // DTO 转换为实体
@@ -229,10 +253,17 @@ public class UserInfoController {
 
             usersService.saveOrUpdateBatch(usersList);
 
-            return R.ok("导入成功");
+            // 返回成功信息
+            response.setContentType("application/json");
+            response.getWriter().write("{\"message\":\"导入成功\"}");
         } catch (Exception e) {
             e.printStackTrace();
-            return R.error("导入失败: " + e.getMessage());
+            try {
+                response.setContentType("application/json");
+                response.getWriter().write("{\"message\":\"导入失败: " + e.getMessage() + "\"}");
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            }
         }
     }
 
@@ -273,6 +304,8 @@ public class UserInfoController {
             }
         }
     }
+
+
 
     /**
      * 将 DTO 转换为 UserInfo 实体

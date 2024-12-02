@@ -77,7 +77,8 @@ public class JobSearchServiceImpl extends ServiceImpl<JobSearchMapper, JobSearch
         Page<JobSearch> jobSearchPage = new Page<>(page, size);
         QueryWrapper<JobSearch> queryWrapper = new QueryWrapper<>();
         queryWrapper.and(wrapper ->
-                wrapper.like("major_requirement", major).or().eq("major_requirement", "专业不限")
+//                wrapper.like("major_requirement", major).or().eq("major_requirement", "专业不限")
+                    wrapper.like("major_requirement", major)
         );
 
         // 查询数据
@@ -163,13 +164,24 @@ public class JobSearchServiceImpl extends ServiceImpl<JobSearchMapper, JobSearch
 
 
 
-        // 按 matchCount 排序，若 matchCount 相等，按 money 降序排序
+        // 按 matchCount 排序，若 matchCount 相等，优先考虑是否是“专业不限”，最后按 money 降序排序
         records.sort((o1, o2) -> {
+            // 1. 比较 matchCount
             int matchCompare = Integer.compare(o2.getMatchCount(), o1.getMatchCount());
             if (matchCompare != 0) {
                 return matchCompare;
             }
-            // 若 matchCount 相等，按 money 降序排序
+
+            // 2. 若 matchCount 相等，将“专业不限”的岗位排在后面
+            boolean isMajorUnlimited1 = "专业不限".equals(o1.getMajorRequirement());
+            boolean isMajorUnlimited2 = "专业不限".equals(o2.getMajorRequirement());
+            if (isMajorUnlimited1 && !isMajorUnlimited2) {
+                return 1; // o1 是“专业不限”，排后面
+            } else if (!isMajorUnlimited1 && isMajorUnlimited2) {
+                return -1; // o2 是“专业不限”，排后面
+            }
+
+            // 3. 最后按薪资降序排序
             int salary1 = getSalaryValue(o1.getMoney());
             int salary2 = getSalaryValue(o2.getMoney());
             return Integer.compare(salary2, salary1);
