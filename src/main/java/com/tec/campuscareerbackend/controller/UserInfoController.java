@@ -2,6 +2,8 @@ package com.tec.campuscareerbackend.controller;
 
 
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.context.AnalysisContext;
+import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tec.campuscareerbackend.common.R;
@@ -13,11 +15,16 @@ import com.tec.campuscareerbackend.service.IUsersService;
 import com.tec.campuscareerbackend.utils.ErrorCellStyleHandler;
 import com.tec.campuscareerbackend.utils.ExcelImportListener;
 import jakarta.annotation.Resource;
+import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URLEncoder;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
@@ -41,6 +48,12 @@ import static com.tec.campuscareerbackend.utils.Utils.formatDate;
 @RestController
 @RequestMapping("/user-info")
 public class UserInfoController {
+    @Value("${file.upload-dir}")
+    private String uploadDir;
+
+    @Value("${server.base-url}")
+    private String serverBaseUrl;
+
     @Resource
     private IUserInfoService userInfoService;
     @Resource
@@ -185,10 +198,23 @@ public class UserInfoController {
     // 批量删除用户信息
     @DeleteMapping("/batch")
     public R<String> deleteUserInfoBatch(@RequestBody List<Integer> ids) {
+        System.out.println("ids"+ids);
+        // 根据ids获取到studentIds
+        List<String> studentIds = userInfoService.listByIds(ids).stream()
+                .map(UserInfo::getStudentId)
+                .collect(Collectors.toList());
+
+        System.out.println("studentIds"+studentIds);
         if (ids == null || ids.isEmpty()) {
             return R.error("ID列表为空");
         }
         userInfoService.removeByIds(ids);
+
+        // 同时删除用户表的数据
+        QueryWrapper<Users> queryWrapper = new QueryWrapper<>();
+        queryWrapper.in("student_id", studentIds);
+        usersService.remove(queryWrapper);
+
         return R.ok("删除成功");
     }
 
@@ -202,8 +228,18 @@ public class UserInfoController {
             List<UserInfoExcelDto> userList = new ArrayList<>();
             List<Map<Integer, String>> errorDataList = new ArrayList<>();
 
+            // 从 Excel 文件中提取所有学号
+            Set<String> studentIdsFromExcel = getAllStudentIdsFromExcel(file.getInputStream());
+
+            // 从数据库查询学号和主键 ID 映射
+            Map<String, Integer> existingStudentIdMap = userInfoService.findExistingStudentIdMap(studentIdsFromExcel);
+
+            // 创建 ExcelImportListener
+            ExcelImportListener listener = new ExcelImportListener(userList, dateFormatter, errorDataList, existingStudentIdMap);
+
+
             // 使用 EasyExcel 读取 Excel 数据，使用自定义监听器
-            EasyExcel.read(file.getInputStream(), UserInfoExcelDto.class, new ExcelImportListener(userList, dateFormatter, errorDataList))
+            EasyExcel.read(file.getInputStream(), UserInfoExcelDto.class, listener)
                     .sheet()
                     .doRead();
 
@@ -255,11 +291,15 @@ public class UserInfoController {
 
             // 返回成功信息
             response.setContentType("application/json");
+            // 避免乱码
+            response.setCharacterEncoding("utf-8");
             response.getWriter().write("{\"message\":\"导入成功\"}");
         } catch (Exception e) {
             e.printStackTrace();
             try {
                 response.setContentType("application/json");
+                // 避免乱码
+                response.setCharacterEncoding("utf-8");
                 response.getWriter().write("{\"message\":\"导入失败: " + e.getMessage() + "\"}");
             } catch (IOException ioException) {
                 ioException.printStackTrace();
@@ -305,7 +345,53 @@ public class UserInfoController {
         }
     }
 
+    @GetMapping("/downloadStandardTemplate")
+    public void downloadStandardTemplate(HttpServletResponse response) {
+        // 定义标准文件的路径
+        String standardFilePath = uploadDir + "user_info_standard.xlsx";
 
+        // 创建文件对象
+        File file = new File(standardFilePath);
+
+        if (!file.exists()) {
+            // 如果文件不存在，返回错误提示
+            try {
+                response.setContentType("application/json");
+                response.setCharacterEncoding("utf-8");
+                response.getWriter().write("{\"message\":\"模板文件不存在\"}");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return;
+        }
+
+        // 如果文件存在，设置响应头并将文件流写入响应
+        try (FileInputStream fis = new FileInputStream(file);
+             ServletOutputStream os = response.getOutputStream()) {
+            // 设置响应头
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.setCharacterEncoding("utf-8");
+            String fileName = URLEncoder.encode("学生个人信息模板", "UTF-8").replaceAll("\\+", "%20");
+            response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + fileName + ".xlsx");
+
+            // 写入文件流
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = fis.read(buffer)) != -1) {
+                os.write(buffer, 0, bytesRead);
+            }
+            os.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+            try {
+                response.setContentType("application/json");
+                response.setCharacterEncoding("utf-8");
+                response.getWriter().write("{\"message\":\"文件下载失败: " + e.getMessage() + "\"}");
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            }
+        }
+    }
 
     /**
      * 将 DTO 转换为 UserInfo 实体
@@ -421,6 +507,33 @@ public class UserInfoController {
         user.setUserType("student");
         user.setPhone(dto.getCounselorPhone());
         return user;
+    }
+
+    public Set<String> getAllStudentIdsFromExcel(InputStream inputStream) {
+        Set<String> studentIds = new HashSet<>();
+
+        // 自定义监听器，用于只提取学号列
+        AnalysisEventListener<UserInfoExcelDto> listener = new AnalysisEventListener<UserInfoExcelDto>() {
+            @Override
+            public void invoke(UserInfoExcelDto dto, AnalysisContext context) {
+                if (dto.getStudentId() != null && !dto.getStudentId().isEmpty()) {
+                    studentIds.add(dto.getStudentId()); // 收集学号
+                }
+            }
+
+            @Override
+            public void doAfterAllAnalysed(AnalysisContext context) {
+                // 完成解析后的逻辑
+            }
+        };
+
+        // 使用 EasyExcel 读取学号列
+        EasyExcel.read(inputStream, UserInfoExcelDto.class, listener)
+                .headRowNumber(1) // 设置表头行数
+                .sheet()
+                .doRead();
+
+        return studentIds; // 返回所有收集到的学号
     }
 
 
