@@ -13,7 +13,7 @@ import com.tec.campuscareerbackend.entity.Users;
 import com.tec.campuscareerbackend.service.IUserInfoService;
 import com.tec.campuscareerbackend.service.IUsersService;
 import com.tec.campuscareerbackend.utils.ErrorCellStyleHandler;
-import com.tec.campuscareerbackend.utils.ExcelImportListener;
+import com.tec.campuscareerbackend.utils.ExcellmportListener.UserInfoExcelImportListener;
 import jakarta.annotation.Resource;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
@@ -27,9 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLEncoder;
 import java.security.NoSuchAlgorithmException;
-import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -235,17 +233,18 @@ public class UserInfoController {
             Map<String, Integer> existingStudentIdMap = userInfoService.findExistingStudentIdMap(studentIdsFromExcel);
 
             // 创建 ExcelImportListener
-            ExcelImportListener listener = new ExcelImportListener(userList, dateFormatter, errorDataList, existingStudentIdMap);
+            UserInfoExcelImportListener listener = new UserInfoExcelImportListener(userList, dateFormatter, errorDataList, existingStudentIdMap);
 
 
             // 使用 EasyExcel 读取 Excel 数据，使用自定义监听器
             EasyExcel.read(file.getInputStream(), UserInfoExcelDto.class, listener)
                     .sheet()
-                    .doRead();
+                    .doReadSync();  // 使用同步读取方式，确保读取所有行
 
             // 如果没有数据，则返回提示
             if (userList.isEmpty()) {
                 response.setContentType("application/json");
+                response.setCharacterEncoding("utf-8");
                 response.getWriter().write("{\"message\":\"导入数据为空\"}");
                 return;
             }

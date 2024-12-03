@@ -8,14 +8,22 @@ import com.tec.campuscareerbackend.common.R;
 import com.tec.campuscareerbackend.dto.JobSearchExcelDto;
 import com.tec.campuscareerbackend.entity.JobSearch;
 import com.tec.campuscareerbackend.service.IJobSearchService;
+import com.tec.campuscareerbackend.utils.ErrorCellStyleHandler;
+import com.tec.campuscareerbackend.utils.ExcellmportListener.JobSearchExcelImportListener;
 import jakarta.annotation.Resource;
+import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -30,6 +38,8 @@ import java.util.stream.Stream;
 @RestController
 @RequestMapping("/job-search")
 public class JobSearchController {
+    @Value("${file.upload-dir}")
+    private String uploadDir;
     @Resource
     private IJobSearchService jobSearchService;
 
@@ -235,47 +245,69 @@ public class JobSearchController {
     }
 
     @PostMapping("/importExcel")
-    public R<String> importJobSearchExcel(@RequestParam("file") MultipartFile file) {
+    public void importJobSearchExcel(@RequestParam("file") MultipartFile file, HttpServletResponse response) {
         try {
-            // 使用 EasyExcel 读取 Excel 数据
-            List<JobSearchExcelDto> jobList = EasyExcel.read(file.getInputStream())
-                    .head(JobSearchExcelDto.class)
+            // 存储读取的数据和错误信息
+            List<JobSearchExcelDto> jobList = new ArrayList<>();
+            List<Map<Integer, String>> errorDataList = new ArrayList<>();
+
+            // 创建 ExcelImportListener
+            JobSearchExcelImportListener listener = new JobSearchExcelImportListener(jobList, errorDataList);
+
+            // 使用 EasyExcel 读取 Excel 数据，使用自定义监听器
+            EasyExcel.read(file.getInputStream(), JobSearchExcelDto.class, listener)
                     .sheet()
-                    .doReadSync();
+                    .doReadSync();  // 使用同步读取方式，确保读取所有行
 
-            // 过滤掉空白行
-            List<JobSearchExcelDto> validJobList = jobList.stream()
-                    .filter(dto -> dto.getCompanyName() != null && !dto.getCompanyName().isEmpty())
+            // 如果没有数据，则返回提示
+            if (jobList.isEmpty()) {
+                response.setContentType("application/json");
+                response.setCharacterEncoding("utf-8");
+                response.getWriter().write("{\"message\":\"导入数据为空\"}");
+                return;
+            }
+
+            // 检查是否存在错误
+            boolean hasErrors = jobList.stream()
+                    .anyMatch(dto -> dto.getErrorMessages() != null && !dto.getErrorMessages().isEmpty());
+
+            if (hasErrors) {
+                // 如果有错误，生成错误文件并返回
+                response.setContentType("application/vnd.ms-excel");
+                response.setCharacterEncoding("utf-8");
+                response.setHeader("Content-Disposition", "attachment;filename=error_data.xlsx");
+
+                // 调用 EasyExcel 写入错误数据
+                EasyExcel.write(response.getOutputStream(), JobSearchExcelDto.class)
+                        .registerWriteHandler(new ErrorCellStyleHandler(errorDataList))
+                        .sheet("错误数据")
+                        .doWrite(jobList);
+                return;
+            }
+
+            // 使用 mapToJobSearch 将 DTO 转换为实体列表
+            List<JobSearch> jobEntities = jobList.stream()
+                    .map(this::mapToJobSearch)  // 调用 mapToJobSearch 方法
                     .collect(Collectors.toList());
-
-            // 将 DTO 转换为实体列表
-            List<JobSearch> jobEntities = validJobList.stream().map(dto -> {
-                JobSearch entity = new JobSearch();
-                entity.setId(dto.getId());
-                entity.setDisplayId(dto.getDisplayId());
-                entity.setCompanyName(dto.getCompanyName());
-                entity.setPositionName(dto.getPositionName());
-                entity.setHrName(dto.getHrName());
-                entity.setHrPhone(dto.getHrPhone());
-                entity.setMajorRequirement(dto.getMajorRequirement());
-                entity.setParticipantCount(dto.getParticipantCount());
-                entity.setMoney(dto.getMoney());
-                entity.setArea(dto.getArea());
-                entity.setApplicationLink(dto.getApplicationLink());
-                entity.setAdditionalRequirements(dto.getAdditionalRequirements());
-                entity.setCompanyDescription(dto.getCompanyDescription());
-                return entity;
-            }).collect(Collectors.toList());
 
             // 批量保存或更新
             if (!jobEntities.isEmpty()) {
                 jobSearchService.saveOrUpdateBatch(jobEntities);
             }
 
-            return R.ok("导入成功");
+            // 返回成功信息
+            response.setContentType("application/json");
+            response.setCharacterEncoding("utf-8");
+            response.getWriter().write("{\"message\":\"导入成功\"}");
         } catch (Exception e) {
             e.printStackTrace();
-            return R.error("导入失败: " + e.getMessage());
+            try {
+                response.setContentType("application/json");
+                response.setCharacterEncoding("utf-8");
+                response.getWriter().write("{\"message\":\"导入失败: " + e.getMessage() + "\"}");
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            }
         }
     }
 
@@ -315,6 +347,77 @@ public class JobSearchController {
                 ioException.printStackTrace();
             }
         }
+    }
+
+    @GetMapping("/downloadStandardTemplate")
+    public void downloadStandardTemplate(HttpServletResponse response) {
+        // 定义标准文件的路径
+        String standardFilePath = uploadDir + "job_search_standard.xlsx";
+
+        // 创建文件对象
+        File file = new File(standardFilePath);
+
+        if (!file.exists()) {
+            // 如果文件不存在，返回错误提示
+            try {
+                response.setContentType("application/json");
+                response.setCharacterEncoding("utf-8");
+                response.getWriter().write("{\"message\":\"模板文件不存在\"}");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return;
+        }
+
+        // 如果文件存在，设置响应头并将文件流写入响应
+        try (FileInputStream fis = new FileInputStream(file);
+             ServletOutputStream os = response.getOutputStream()) {
+            // 设置响应头
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.setCharacterEncoding("utf-8");
+            String fileName = URLEncoder.encode("学生个人信息模板", "UTF-8").replaceAll("\\+", "%20");
+            response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + fileName + ".xlsx");
+
+            // 写入文件流
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = fis.read(buffer)) != -1) {
+                os.write(buffer, 0, bytesRead);
+            }
+            os.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+            try {
+                response.setContentType("application/json");
+                response.setCharacterEncoding("utf-8");
+                response.getWriter().write("{\"message\":\"文件下载失败: " + e.getMessage() + "\"}");
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * 将 JobSearchExcelDto 转换为 JobSearch 实体对象
+     */
+    public JobSearch mapToJobSearch(JobSearchExcelDto dto) {
+        JobSearch jobSearch = new JobSearch();
+
+        jobSearch.setId(dto.getId());
+        jobSearch.setDisplayId(dto.getDisplayId());
+        jobSearch.setCompanyName(dto.getCompanyName());
+        jobSearch.setPositionName(dto.getPositionName());
+        jobSearch.setHrName(dto.getHrName());
+        jobSearch.setHrPhone(dto.getHrPhone());
+        jobSearch.setMajorRequirement(dto.getMajorRequirement());
+        jobSearch.setParticipantCount(dto.getParticipantCount());
+        jobSearch.setMoney(dto.getMoney());
+        jobSearch.setArea(dto.getArea());
+        jobSearch.setApplicationLink(dto.getApplicationLink());
+        jobSearch.setAdditionalRequirements(dto.getAdditionalRequirements());
+        jobSearch.setCompanyDescription(dto.getCompanyDescription());
+
+        return jobSearch;
     }
 
     /**

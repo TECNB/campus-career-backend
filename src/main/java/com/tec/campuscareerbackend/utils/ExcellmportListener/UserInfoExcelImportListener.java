@@ -1,12 +1,8 @@
-package com.tec.campuscareerbackend.utils;
+package com.tec.campuscareerbackend.utils.ExcellmportListener;
 
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
-import com.alibaba.excel.exception.ExcelDataConvertException;
 import com.tec.campuscareerbackend.dto.UserInfoExcelDto;
-import com.tec.campuscareerbackend.service.IUserInfoService;
-import jakarta.annotation.Resource;
-import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -15,7 +11,7 @@ import java.util.*;
 
 
 
-public class ExcelImportListener extends AnalysisEventListener<UserInfoExcelDto> {
+public class UserInfoExcelImportListener extends AnalysisEventListener<UserInfoExcelDto> {
 
     private final List<UserInfoExcelDto> userList;
     private final DateTimeFormatter dateFormatter;
@@ -23,7 +19,7 @@ public class ExcelImportListener extends AnalysisEventListener<UserInfoExcelDto>
     private final Set<String> excelStudentIds; // 用于存储已经出现过的学号
     private final Map<String, Integer> existingStudentIdMap; // 数据库中的学号与主键映射
 
-    public ExcelImportListener(List<UserInfoExcelDto> userList, DateTimeFormatter dateFormatter, List<Map<Integer, String>> errorDataList, Map<String, Integer> existingStudentIdMap) {
+    public UserInfoExcelImportListener(List<UserInfoExcelDto> userList, DateTimeFormatter dateFormatter, List<Map<Integer, String>> errorDataList, Map<String, Integer> existingStudentIdMap) {
         this.userList = userList;
         this.dateFormatter = dateFormatter;
         this.errorDataList = errorDataList;

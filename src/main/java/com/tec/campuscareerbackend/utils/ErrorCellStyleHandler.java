@@ -18,6 +18,7 @@ public class ErrorCellStyleHandler implements CellWriteHandler, RowWriteHandler 
 
     public ErrorCellStyleHandler(List<Map<Integer, String>> errorDataList) {
         this.errorDataList = errorDataList;
+        System.out.println("ErrorCellStyleHandler initialized"+errorDataList.size());
     }
 
     @Override

@@ -1,9 +1,12 @@
 package com.tec.campuscareerbackend.dto;
 
+import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @Data
 public class JobSearchExcelDto {
@@ -45,4 +48,7 @@ public class JobSearchExcelDto {
 
     @ExcelProperty("企业简介")
     private String companyDescription;
+
+    @ExcelIgnore
+    private Map<Integer, String> errorMessages = new HashMap<>();
 }
