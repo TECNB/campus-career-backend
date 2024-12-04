@@ -2,6 +2,7 @@ package com.tec.campuscareerbackend.dto;
 
 import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
+import com.tec.campuscareerbackend.utils.CustomIntegerConverter;
 import lombok.Data;
 
 import java.util.HashMap;
@@ -21,7 +22,7 @@ public class ConversationRecordsExcelDto {
     @ExcelProperty("谈话对象")
     private String conversationTarget;
 
-    @ExcelProperty("谈话人数")
+    @ExcelProperty(value = "谈话人数", converter = CustomIntegerConverter.class)
     private Integer participantCount;
 
     @ExcelProperty("其他谈话主题")

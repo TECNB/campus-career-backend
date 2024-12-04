@@ -8,18 +8,26 @@ import com.tec.campuscareerbackend.common.R;
 import com.tec.campuscareerbackend.dto.ConversationRecordsExcelDto;
 import com.tec.campuscareerbackend.entity.ConversationRecords;
 import com.tec.campuscareerbackend.service.IConversationRecordsService;
+import com.tec.campuscareerbackend.utils.ErrorCellStyleHandler;
+import com.tec.campuscareerbackend.utils.ExcellmportListener.ConversationRecordsImportListener;
 import jakarta.annotation.Resource;
+import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -33,6 +41,9 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/conversation-records")
 public class ConversationRecordsController {
+    @Value("${file.upload-dir}")
+    private String uploadDir;
+
     @Resource
     private IConversationRecordsService conversationRecordsService;
 
@@ -160,38 +171,72 @@ public class ConversationRecordsController {
     }
 
     @PostMapping("/importExcel")
-    public R<String> importExcel(@RequestParam("file") MultipartFile file) {
+    public void importConversationRecordsExcel(@RequestParam("file") MultipartFile file, HttpServletResponse response) {
         try {
-            // 定义日期格式解析器
-            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
+            // 存储读取的数据和错误信息
+            List<ConversationRecordsExcelDto> recordList = new ArrayList<>();
+            List<Map<Integer, String>> errorDataList = new ArrayList<>();
 
-            // 读取 Excel 数据
-            List<ConversationRecordsExcelDto> conversationList = EasyExcel.read(file.getInputStream())
-                    .head(ConversationRecordsExcelDto.class)
+            // 创建自定义监听器
+            ConversationRecordsImportListener listener = new ConversationRecordsImportListener(recordList, errorDataList);
+
+            // 使用 EasyExcel 读取 Excel 数据
+            EasyExcel.read(file.getInputStream(), ConversationRecordsExcelDto.class, listener)
                     .sheet()
-                    .doReadSync();
+                    .doReadSync(); // 确保读取所有行数据
 
-            // 过滤掉空白行并转换为实体
-            List<ConversationRecords> conversationRecords = conversationList.stream()
-                    .filter(this::isValidDto) // 检查是否为空白行
-                    .map(dto -> convertToEntity(dto, dateFormatter)) // DTO 转实体
-                    .collect(Collectors.toList());
-
-            // 批量保存或更新数据
-            if (!conversationRecords.isEmpty()) {
-                conversationRecordsService.saveOrUpdateBatch(conversationRecords);
+            // 如果没有数据，则返回提示
+            if (recordList.isEmpty()) {
+                response.setContentType("application/json");
+                response.setCharacterEncoding("utf-8");
+                response.getWriter().write("{\"message\":\"导入数据为空\"}");
+                return;
             }
 
-            return R.ok("导入成功");
-        } catch (IOException e) {
-            e.printStackTrace();
-            return R.error("导入失败: 文件读取错误");
-        } catch (DateTimeParseException e) {
-            e.printStackTrace();
-            return R.error("导入失败: 日期格式错误");
+            // 检查是否存在错误
+            boolean hasErrors = recordList.stream()
+                    .anyMatch(dto -> dto.getErrorMessages() != null && !dto.getErrorMessages().isEmpty());
+
+            if (hasErrors) {
+                // 如果存在错误，生成错误文件并返回
+                response.setContentType("application/vnd.ms-excel");
+                response.setCharacterEncoding("utf-8");
+                response.setHeader("Content-Disposition", "attachment;filename=error_data.xlsx");
+
+                // 调用 EasyExcel 写入错误数据
+                EasyExcel.write(response.getOutputStream(), ConversationRecordsExcelDto.class)
+                        .registerWriteHandler(new ErrorCellStyleHandler(errorDataList)) // 定制错误样式
+                        .sheet("错误数据")
+                        .doWrite(recordList);
+                return;
+            }
+
+            // 日期格式化器
+            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
+
+            // 转换 DTO 为实体
+            List<ConversationRecords> entityList = recordList.stream()
+                    .map(dto -> convertToEntity(dto, dateFormatter)) // 使用提供的转换方法
+                    .collect(Collectors.toList());
+
+            // 批量保存或更新到数据库
+            if (!entityList.isEmpty()) {
+                conversationRecordsService.saveOrUpdateBatch(entityList); // 调用 service 方法保存
+            }
+
+            // 返回成功信息
+            response.setContentType("application/json");
+            response.setCharacterEncoding("utf-8");
+            response.getWriter().write("{\"message\":\"导入成功\"}");
         } catch (Exception e) {
             e.printStackTrace();
-            return R.error("导入失败: " + e.getMessage());
+            try {
+                response.setContentType("application/json");
+                response.setCharacterEncoding("utf-8");
+                response.getWriter().write("{\"message\":\"导入失败: " + e.getMessage() + "\"}");
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            }
         }
     }
 
@@ -227,6 +272,54 @@ public class ConversationRecordsController {
                 response.setContentType("application/json");
                 response.setCharacterEncoding("utf-8");
                 response.getWriter().write("{\"message\":\"导出失败: " + e.getMessage() + "\"}");
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            }
+        }
+    }
+
+    @GetMapping("/downloadStandardTemplate")
+    public void downloadStandardTemplate(HttpServletResponse response) {
+        // 定义标准文件的路径
+        String standardFilePath = uploadDir + "conversation_records_standard.xlsx";
+
+        // 创建文件对象
+        File file = new File(standardFilePath);
+
+        if (!file.exists()) {
+            // 如果文件不存在，返回错误提示
+            try {
+                response.setContentType("application/json");
+                response.setCharacterEncoding("utf-8");
+                response.getWriter().write("{\"message\":\"模板文件不存在\"}");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return;
+        }
+
+        // 如果文件存在，设置响应头并将文件流写入响应
+        try (FileInputStream fis = new FileInputStream(file);
+             ServletOutputStream os = response.getOutputStream()) {
+            // 设置响应头
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.setCharacterEncoding("utf-8");
+            String fileName = URLEncoder.encode("谈话记录模板", "UTF-8").replaceAll("\\+", "%20");
+            response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + fileName + ".xlsx");
+
+            // 写入文件流
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = fis.read(buffer)) != -1) {
+                os.write(buffer, 0, bytesRead);
+            }
+            os.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+            try {
+                response.setContentType("application/json");
+                response.setCharacterEncoding("utf-8");
+                response.getWriter().write("{\"message\":\"文件下载失败: " + e.getMessage() + "\"}");
             } catch (IOException ioException) {
                 ioException.printStackTrace();
             }
