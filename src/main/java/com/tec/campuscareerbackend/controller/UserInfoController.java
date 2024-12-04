@@ -49,9 +49,6 @@ public class UserInfoController {
     @Value("${file.upload-dir}")
     private String uploadDir;
 
-    @Value("${server.base-url}")
-    private String serverBaseUrl;
-
     @Resource
     private IUserInfoService userInfoService;
     @Resource

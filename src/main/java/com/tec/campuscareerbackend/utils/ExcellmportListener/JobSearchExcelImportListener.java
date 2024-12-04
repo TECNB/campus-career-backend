@@ -44,6 +44,8 @@ public class JobSearchExcelImportListener extends AnalysisEventListener<JobSearc
         // 校验第 8 列: 招聘人数
         if (dto.getParticipantCount() == null) {
             errors.put(7, "招聘人数不能为空");
+        }else if (dto.getParticipantCount() == 0) {
+            errors.put(7, "招聘人数必须为数字整数");
         }
 
         // 校验第 9 列: 薪资待遇

@@ -1,7 +1,11 @@
 package com.tec.campuscareerbackend.dto;
 
+import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import lombok.Data;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Data
 public class ConversationRecordsExcelDto {
@@ -58,4 +62,7 @@ public class ConversationRecordsExcelDto {
 
     @ExcelProperty("最后更新时间")
     private String updatedAt;
+
+    @ExcelIgnore
+    private Map<Integer, String> errorMessages = new HashMap<>();
 }

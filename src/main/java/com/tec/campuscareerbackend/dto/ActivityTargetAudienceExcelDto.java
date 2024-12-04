@@ -1,7 +1,11 @@
 package com.tec.campuscareerbackend.dto;
 
+import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import lombok.Data;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Data
 public class ActivityTargetAudienceExcelDto {
@@ -16,4 +20,7 @@ public class ActivityTargetAudienceExcelDto {
 
     @ExcelProperty("专业名称")
     private String major;
+
+    @ExcelIgnore
+    private Map<Integer, String> errorMessages = new HashMap<>();
 }

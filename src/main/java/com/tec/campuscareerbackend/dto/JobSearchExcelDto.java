@@ -2,6 +2,7 @@ package com.tec.campuscareerbackend.dto;
 
 import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
+import com.tec.campuscareerbackend.utils.CustomIntegerConverter;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -31,7 +32,7 @@ public class JobSearchExcelDto {
     @ExcelProperty("所需专业")
     private String majorRequirement;
 
-    @ExcelProperty("招聘人数")
+    @ExcelProperty(value = "招聘人数", converter = CustomIntegerConverter.class)
     private Integer participantCount;
 
     @ExcelProperty("薪资待遇")

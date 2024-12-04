@@ -93,7 +93,7 @@ public class UserInfoExcelImportListener extends AnalysisEventListener<UserInfoE
 
         // 校验党课工时必须为整数
         if (dto.getPartyHours() == 0) {
-            errors.put(36, "党课工时必须为整数"); // 第 37 列错误
+            errors.put(36, "党课工时必须为数字整数"); // 第 37 列错误
         }
 
         // 将错误信息保存到 dto 中
@@ -101,7 +101,7 @@ public class UserInfoExcelImportListener extends AnalysisEventListener<UserInfoE
 
         // 添加数据和错误信息到 userList 和 errorDataList
         userList.add(dto);
-        errorDataList.add(errors);
+        errorDataList.add(errors.isEmpty() ? new HashMap<>() : errors);  // 确保每行都有一个 Map
     }
 
     @Override
