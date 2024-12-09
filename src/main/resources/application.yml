@@ -11,7 +11,7 @@ spring:
     password: Qro4ndqQIlFOORQ
   web:
     resources:
-      static-locations: file:/Users/tec/Desktop/
+      static-locations: file:/Users/tec/Desktop/campus-career-file/
 #      static-locations: file:/home/sdsy/docekr-campus-career/image/
   servlet:
     multipart:
@@ -45,6 +45,6 @@ mybatis-plus:
     map-underscore-to-camel-case: true #???????????camel case???
 
 file:
-  upload-dir: /Users/tec/Desktop/
+  upload-dir: /Users/tec/Desktop/campus-career-file/
 #  upload-dir: /home/sdsy/docekr-campus-career/image/
 

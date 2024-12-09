@@ -38,7 +38,7 @@ public class UserInfoExcelImportListener extends AnalysisEventListener<UserInfoE
 
         // 校验性别是否为“男”或“女”
         if (dto.getGender() != null && !("男".equals(dto.getGender()) || "女".equals(dto.getGender()))) {
-            errors.put(1, "性别必须为“男”或“女”"); // 第 2 列错误
+            errors.put(2, "性别必须为“男”或“女”"); // 第 3 列错误
         }
 
         // 校验手机号必须为11位
