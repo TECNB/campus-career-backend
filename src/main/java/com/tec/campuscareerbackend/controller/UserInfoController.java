@@ -434,6 +434,20 @@ public class UserInfoController {
         userInfo.setPartyHours(dto.getPartyHours());
         userInfo.setBranchSecretary(dto.getBranchSecretary());
         userInfo.setBranchDeputySecretary(dto.getBranchDeputySecretary());
+        userInfo.setEmail(dto.getEmail());
+        userInfo.setQqNumber(dto.getQqNumber());
+        userInfo.setWechatId(dto.getWechatId());
+        userInfo.setDouyinId(dto.getDouyinId());
+        userInfo.setParent1Name(dto.getParent1Name());
+        userInfo.setParent1Phone(dto.getParent1Phone());
+        userInfo.setParent1Company(dto.getParent1Company());
+        userInfo.setParent1Job(dto.getParent1Job());
+        userInfo.setParent2Name(dto.getParent2Name());
+        userInfo.setParent2Phone(dto.getParent2Phone());
+        userInfo.setParent2Company(dto.getParent2Company());
+        userInfo.setParent2Job(dto.getParent2Job());
+        userInfo.setEmergencyContactName(dto.getEmergencyContactName());
+        userInfo.setEmergencyContactPhone(dto.getEmergencyContactPhone());
         return userInfo;
     }
 
@@ -482,6 +496,20 @@ public class UserInfoController {
         dto.setPartyHours(userInfo.getPartyHours());
         dto.setBranchSecretary(userInfo.getBranchSecretary());
         dto.setBranchDeputySecretary(userInfo.getBranchDeputySecretary());
+        dto.setEmail(userInfo.getEmail());
+        dto.setQqNumber(userInfo.getQqNumber());
+        dto.setWechatId(userInfo.getWechatId());
+        dto.setDouyinId(userInfo.getDouyinId());
+        dto.setParent1Name(userInfo.getParent1Name());
+        dto.setParent1Phone(userInfo.getParent1Phone());
+        dto.setParent1Company(userInfo.getParent1Company());
+        dto.setParent1Job(userInfo.getParent1Job());
+        dto.setParent2Name(userInfo.getParent2Name());
+        dto.setParent2Phone(userInfo.getParent2Phone());
+        dto.setParent2Company(userInfo.getParent2Company());
+        dto.setParent2Job(userInfo.getParent2Job());
+        dto.setEmergencyContactName(userInfo.getEmergencyContactName());
+        dto.setEmergencyContactPhone(userInfo.getEmergencyContactPhone());
         return dto;
     }
 

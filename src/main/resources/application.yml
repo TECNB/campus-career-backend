@@ -1,6 +1,7 @@
 server:
   port: 8080
-  base-url: http://localhost:8080
+#  base-url: http://localhost:8080
+  base-url: http://10.248.6.72:8080
 spring:
   application:
     name: stargazerbackend
@@ -11,8 +12,8 @@ spring:
     password: Qro4ndqQIlFOORQ
   web:
     resources:
-      static-locations: file:/Users/tec/Desktop/campus-career-file/
-#      static-locations: file:/home/sdsy/docekr-campus-career/image/
+#      static-locations: file:/Users/tec/Desktop/campus-career-file/
+      static-locations: file:/home/sdsy/docekr-campus-career/file/
   servlet:
     multipart:
       max-file-size: 200MB
@@ -45,6 +46,6 @@ mybatis-plus:
     map-underscore-to-camel-case: true #???????????camel case???
 
 file:
-  upload-dir: /Users/tec/Desktop/campus-career-file/
-#  upload-dir: /home/sdsy/docekr-campus-career/image/
+#  upload-dir: /Users/tec/Desktop/campus-career-file/
+  upload-dir: /home/sdsy/docekr-campus-career/file/
 

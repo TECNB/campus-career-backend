@@ -131,6 +131,90 @@ public class UserInfoExcelDto {
     @ExcelProperty("党支部副书记姓名")
     private String branchDeputySecretary;
 
+    /**
+     * 电子邮箱
+     */
+    @ExcelProperty("电子邮箱")
+    private String email;
+
+    /**
+     * QQ号码
+     */
+    @ExcelProperty("QQ号码")
+    private String qqNumber;
+
+    /**
+     * 微信号码
+     */
+    @ExcelProperty("微信号码")
+    private String wechatId;
+
+    /**
+     * 抖音账号
+     */
+    @ExcelProperty("抖音账号")
+    private String douyinId;
+
+    /**
+     * 家长1姓名
+     */
+    @ExcelProperty("家长1姓名")
+    private String parent1Name;
+
+    /**
+     * 家长1手机号
+     */
+    @ExcelProperty("家长1手机号")
+    private String parent1Phone;
+
+    /**
+     * 家长1工作单位
+     */
+    @ExcelProperty("家长1工作单位")
+    private String parent1Company;
+
+    /**
+     * 家长1职业
+     */
+    @ExcelProperty("家长1职业")
+    private String parent1Job;
+
+    /**
+     * 家长2姓名
+     */
+    @ExcelProperty("家长2姓名")
+    private String parent2Name;
+
+    /**
+     * 家长2手机号
+     */
+    @ExcelProperty("家长2手机号")
+    private String parent2Phone;
+
+    /**
+     * 家长2工作单位
+     */
+    @ExcelProperty("家长2工作单位")
+    private String parent2Company;
+
+    /**
+     * 家长2职业
+     */
+    @ExcelProperty("家长2职业")
+    private String parent2Job;
+
+    /**
+     * 紧急联系人姓名
+     */
+    @ExcelProperty("紧急联系人姓名")
+    private String emergencyContactName;
+
+    /**
+     * 紧急联系人手机号
+     */
+    @ExcelProperty("紧急联系人手机号")
+    private String emergencyContactPhone;
+
     @ExcelIgnore
     private Map<Integer, String> errorMessages = new HashMap<>();
 }

@@ -237,5 +237,73 @@ public class UserInfo implements Serializable {
      */
     private LocalDateTime updatedAt;
 
+    /**
+     * 电子邮箱
+     */
+    private String email;
 
+    /**
+     * QQ号码
+     */
+    private String qqNumber;
+
+    /**
+     * 微信号码
+     */
+    private String wechatId;
+
+    /**
+     * 抖音账号
+     */
+    private String douyinId;
+
+    /**
+     * 家长1姓名
+     */
+    private String parent1Name;
+
+    /**
+     * 家长1手机号
+     */
+    private String parent1Phone;
+
+    /**
+     * 家长1工作单位
+     */
+    private String parent1Company;
+
+    /**
+     * 家长1职业
+     */
+    private String parent1Job;
+
+    /**
+     * 家长2姓名
+     */
+    private String parent2Name;
+
+    /**
+     * 家长2手机号
+     */
+    private String parent2Phone;
+
+    /**
+     * 家长2工作单位
+     */
+    private String parent2Company;
+
+    /**
+     * 家长2职业
+     */
+    private String parent2Job;
+
+    /**
+     * 紧急联系人姓名
+     */
+    private String emergencyContactName;
+
+    /**
+     * 紧急联系人手机号
+     */
+    private String emergencyContactPhone;
 }
