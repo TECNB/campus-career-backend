@@ -215,6 +215,30 @@ public class UserInfoExcelDto {
     @ExcelProperty("紧急联系人手机号")
     private String emergencyContactPhone;
 
+    @ExcelProperty("是否特殊群体")
+    private String isSpecialGroup;
+
+    @ExcelProperty("主要问题")
+    private String mainProblem;
+
+    @ExcelProperty("并存问题")
+    private String coexistingProblem;
+
+    @ExcelProperty("问题简述")
+    private String problemDescription;
+
+    @ExcelProperty("帮扶联系人")
+    private String supportContact;
+
+    @ExcelProperty("帮扶联系人电话")
+    private String supportContactPhone;
+
+    @ExcelProperty("跟踪记录")
+    private String trackingRecord;
+
+    @ExcelProperty("备注")
+    private String remarks;
+
     @ExcelIgnore
     private Map<Integer, String> errorMessages = new HashMap<>();
 }

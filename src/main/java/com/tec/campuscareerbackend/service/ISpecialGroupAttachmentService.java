@@ -15,8 +15,8 @@ import java.util.List;
  * @since 2024-12-12
  */
 public interface ISpecialGroupAttachmentService extends IService<SpecialGroupAttachment> {
-    SpecialGroupAttachment deleteAllAttachment(Integer specialGroupId);
+    SpecialGroupAttachment deleteAllAttachment(String studentId);
 
-    List<SpecialGroupAttachment> getAttachmentsBySpecialGroupId(Integer specialGroupId);
+    List<SpecialGroupAttachment> getAttachmentsByStudentId(String studentId);
 
 }

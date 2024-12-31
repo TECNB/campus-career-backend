@@ -109,6 +109,9 @@ public class UserInfoController {
         // 根据字段名动态添加查询条件
         if (filterField != null && filterValue != null) {
             switch (filterField) {
+                case "name":
+                    queryWrapper.like("name", filterValue);
+                    break;
                 case "studentId":
                     queryWrapper.eq("student_id", filterValue);
                     break;
@@ -448,6 +451,16 @@ public class UserInfoController {
         userInfo.setParent2Job(dto.getParent2Job());
         userInfo.setEmergencyContactName(dto.getEmergencyContactName());
         userInfo.setEmergencyContactPhone(dto.getEmergencyContactPhone());
+
+        // 新增字段的映射
+        userInfo.setIsSpecialGroup(dto.getIsSpecialGroup());
+        userInfo.setMainProblem(dto.getMainProblem());
+        userInfo.setCoexistingProblem(dto.getCoexistingProblem());
+        userInfo.setProblemDescription(dto.getProblemDescription());
+        userInfo.setSupportContact(dto.getSupportContact());
+        userInfo.setSupportContactPhone(dto.getSupportContactPhone());
+        userInfo.setTrackingRecord(dto.getTrackingRecord());
+        userInfo.setRemarks(dto.getRemarks());
         return userInfo;
     }
 
@@ -510,6 +523,16 @@ public class UserInfoController {
         dto.setParent2Job(userInfo.getParent2Job());
         dto.setEmergencyContactName(userInfo.getEmergencyContactName());
         dto.setEmergencyContactPhone(userInfo.getEmergencyContactPhone());
+
+        // 新增字段的映射
+        dto.setIsSpecialGroup(userInfo.getIsSpecialGroup());
+        dto.setMainProblem(userInfo.getMainProblem());
+        dto.setCoexistingProblem(userInfo.getCoexistingProblem());
+        dto.setProblemDescription(userInfo.getProblemDescription());
+        dto.setSupportContact(userInfo.getSupportContact());
+        dto.setSupportContactPhone(userInfo.getSupportContactPhone());
+        dto.setTrackingRecord(userInfo.getTrackingRecord());
+        dto.setRemarks(userInfo.getRemarks());
         return dto;
     }
 

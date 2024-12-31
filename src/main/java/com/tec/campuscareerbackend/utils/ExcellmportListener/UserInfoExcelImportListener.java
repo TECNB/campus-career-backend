@@ -8,7 +8,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
-
+import java.util.regex.Pattern;
 
 
 public class UserInfoExcelImportListener extends AnalysisEventListener<UserInfoExcelDto> {
@@ -94,6 +94,21 @@ public class UserInfoExcelImportListener extends AnalysisEventListener<UserInfoE
         // 校验党课工时必须为整数
         if (dto.getPartyHours() == 0) {
             errors.put(36, "党课工时必须为数字整数"); // 第 37 列错误
+        }
+        // 校验是否特殊群体是否为空
+        if (dto.getIsSpecialGroup() == null || dto.getIsSpecialGroup().isEmpty()) {
+            errors.put(54, "是否特殊群体不能为空"); // 第 55 列错误
+        }
+
+        // 校验是否特殊群体是否为“是”或“否”
+        if (dto.getIsSpecialGroup() != null && !("是".equals(dto.getIsSpecialGroup()) || "否".equals(dto.getIsSpecialGroup()))) {
+            errors.put(54, "是否特殊群体必须为“是”或“否”"); // 第 55 列错误
+        }
+
+        // 校验跟踪记录是否为“/”分割
+        if (dto.getTrackingRecord() != null && !dto.getTrackingRecord().isEmpty()
+                && !dto.getTrackingRecord().contains("/")) {
+            errors.put(60, "所需跟踪记录必须使用“/”分割"); // 第 61 列错误
         }
 
         // 将错误信息保存到 dto 中

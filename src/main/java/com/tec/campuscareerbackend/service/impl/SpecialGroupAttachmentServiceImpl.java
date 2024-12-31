@@ -20,15 +20,14 @@ import java.util.List;
 public class SpecialGroupAttachmentServiceImpl extends ServiceImpl<SpecialGroupAttachmentMapper, SpecialGroupAttachment> implements ISpecialGroupAttachmentService {
 
     @Override
-    public SpecialGroupAttachment deleteAllAttachment(Integer specialGroupId) {
+    public SpecialGroupAttachment deleteAllAttachment(String studentId) {
         // 删除所有附件
-        this.lambdaQuery().eq(SpecialGroupAttachment::getSpecialGroupId, specialGroupId).list().forEach(this::removeById);
+        this.lambdaQuery().eq(SpecialGroupAttachment::getStudentId, studentId).list().forEach(this::removeById);
         return null;
     }
-
     @Override
-    public List<SpecialGroupAttachment> getAttachmentsBySpecialGroupId(Integer specialGroupId) {
+    public List<SpecialGroupAttachment> getAttachmentsByStudentId(String studentId) {
         // 获取附件
-        return this.lambdaQuery().eq(SpecialGroupAttachment::getSpecialGroupId, specialGroupId).list();
+        return this.lambdaQuery().eq(SpecialGroupAttachment::getStudentId, studentId).list();
     }
 }

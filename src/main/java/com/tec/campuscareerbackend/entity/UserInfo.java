@@ -228,16 +228,6 @@ public class UserInfo implements Serializable {
     private String branchDeputySecretary;
 
     /**
-     * 创建时间
-     */
-    private LocalDateTime createdAt;
-
-    /**
-     * 更新时间
-     */
-    private LocalDateTime updatedAt;
-
-    /**
      * 电子邮箱
      */
     private String email;
@@ -306,4 +296,30 @@ public class UserInfo implements Serializable {
      * 紧急联系人手机号
      */
     private String emergencyContactPhone;
+
+    private String isSpecialGroup;
+
+    private String mainProblem;
+
+    private String coexistingProblem;
+
+    private String problemDescription;
+
+    private String supportContact;
+
+    private String supportContactPhone;
+
+    private String trackingRecord;
+
+    private String remarks;
+
+    /**
+     * 创建时间
+     */
+    private LocalDateTime createdAt;
+
+    /**
+     * 更新时间
+     */
+    private LocalDateTime updatedAt;
 }

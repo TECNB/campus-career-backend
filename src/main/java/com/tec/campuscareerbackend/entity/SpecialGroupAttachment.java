@@ -34,7 +34,7 @@ public class SpecialGroupAttachment implements Serializable {
     /**
      * 特殊学生 ID
      */
-    private Integer specialGroupId;
+    private String studentId;
 
     /**
      * 文件路径

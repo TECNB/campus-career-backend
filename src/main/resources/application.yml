@@ -1,7 +1,7 @@
 server:
   port: 8080
 #  base-url: http://localhost:8080
-  base-url: http://10.248.6.72:8080
+  base-url: http://10.248.6.72:8181
 spring:
   application:
     name: stargazerbackend

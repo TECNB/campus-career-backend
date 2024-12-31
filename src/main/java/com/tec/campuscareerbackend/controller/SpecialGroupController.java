@@ -48,7 +48,7 @@ public class SpecialGroupController {
 
         // 查询附件
         for (SpecialGroup specialGroup : result.getRecords()) {
-            specialGroup.setAttachment(specialGroupAttachmentService.getAttachmentsBySpecialGroupId(specialGroup.getId()));
+            specialGroup.setAttachment(specialGroupAttachmentService.getAttachmentsByStudentId(specialGroup.getStudentId()));
         }
 
         return R.ok(result);
@@ -57,25 +57,19 @@ public class SpecialGroupController {
     // 根据ID查询特殊群体信息
     @GetMapping("/{id}")
     public R<SpecialGroup> getSpecialGroupById(@PathVariable String id) {
-        QueryWrapper<SpecialGroup> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("student_id", id);
-        SpecialGroup specialGroup = specialGroupService.getOne(queryWrapper);
-        if (specialGroup == null) {
-            return R.ok(null);
-        }
-        specialGroup.setAttachment(specialGroupAttachmentService.getAttachmentsBySpecialGroupId(specialGroup.getId()));
+        SpecialGroup specialGroup = new SpecialGroup();
+        specialGroup.setAttachment(specialGroupAttachmentService.getAttachmentsByStudentId(id));
         return R.ok(specialGroup);
     }
 
     // 添加特殊群体信息
     @PostMapping
     public R<SpecialGroup> addSpecialGroup(@RequestBody SpecialGroup specialGroup) {
-        specialGroupService.save(specialGroup);
         // 保存附件
         List<SpecialGroupAttachment> attachment = specialGroup.getAttachment();
         if (attachment != null) {
             for (SpecialGroupAttachment specialGroupAttachment : attachment) {
-                specialGroupAttachment.setSpecialGroupId(specialGroup.getId());
+                specialGroupAttachment.setStudentId(specialGroup.getStudentId());
                 specialGroupAttachmentService.save(specialGroupAttachment);
             }
         }
@@ -87,20 +81,19 @@ public class SpecialGroupController {
     @DeleteMapping
     public R<String> deleteSpecialGroup(@RequestBody SpecialGroup specialGroup) {
         specialGroupService.removeById(specialGroup);
-        specialGroupAttachmentService.deleteAllAttachment(specialGroup.getId());
+        specialGroupAttachmentService.deleteAllAttachment(specialGroup.getStudentId());
         return R.ok("删除成功");
     }
 
     // 更新特殊群体信息
     @PutMapping
     public R<SpecialGroup> updateSpecialGroup(@RequestBody SpecialGroup specialGroup) {
-        specialGroupService.updateById(specialGroup);
-        specialGroupAttachmentService.deleteAllAttachment(specialGroup.getId());
+        specialGroupAttachmentService.deleteAllAttachment(specialGroup.getStudentId());
         // 保存附件
         List<SpecialGroupAttachment> attachment = specialGroup.getAttachment();
         if (attachment != null) {
             for (SpecialGroupAttachment specialGroupAttachment : attachment) {
-                specialGroupAttachment.setSpecialGroupId(specialGroup.getId());
+                specialGroupAttachment.setStudentId(specialGroup.getStudentId());
                 specialGroupAttachmentService.save(specialGroupAttachment);
             }
         }
